@@ -1,8 +1,9 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Eyebrow } from "./Eyebrow";
 import { ArrowRight, MapPin } from "lucide-react";
 import { ButtonLink } from "./ButtonLink";
 import { heroSlides } from "@/helpers";
+import Image from "next/image";
 
 export function HeroCarousel() {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -72,7 +73,7 @@ export function HeroCarousel() {
             key={item.title}
             aria-hidden={index !== activeSlide}
           >
-            <img src={item.image} alt={item.alt} />
+            <Image src={item.image} alt={item.alt} fill/>
           </div>
         ))}
       </div>

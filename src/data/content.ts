@@ -467,11 +467,11 @@ export const stakeholderVoices = [
   {
     id: "voice-01",
     name: "Ibrahim Badamasi Babangida",
-    role: "Former Military President of Nigeria",
+    role: "Former Military Head of State",
     category: "STAKEHOLDER",
-    quote: "“Stakeholder statement will be added here.”",
+    quote: "“I call on stakeholders to support ICAADA in combating the abuse and use of illicit drugs.”",
     description:
-      "Placeholder profile copy. Replace with a verified statement, title and organisation when the source material is ready.",
+      "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
@@ -480,12 +480,12 @@ export const stakeholderVoices = [
   },
   {
     id: "voice-02",
-    name: "Hon. Aminu Tambuwal",
+    name: "Hon. Aminu Waziri Tambuwal",
     role: "Former Speaker, House of Representatives",
-    category: "COMMUNITY LEADER",
+    category: "POLITICAL LEADER",
     quote: "“Community perspective will be added here.”",
     description:
-      "Placeholder community voice. Replace with a verified profile and statement before publication.",
+      "Aminu Waziri Tambuwal is a Nigerian lawyer and politician who currently serves as the Senator representing Sokoto South.",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
@@ -494,13 +494,13 @@ export const stakeholderVoices = [
   },
   {
     id: "voice-03",
-    name: "[Youth Advocate Name]",
-    role: "[Youth role / Organisation]",
+    name: "Ahmed Idris",
+    role: "Former Accountant General of the federation",
     category: "ADVOCATE",
     quote: "“Youth perspective will be added here.”",
     description:
-      "Placeholder youth advocate profile. Replace with verified identity, affiliation and statement before publication.",
-    image: photos.youth,
+      "Ahmed Idris (born 25 November 1960) is a Nigerian financial accountant who served as the accountant general of Nigeria",
+    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230616/WhatsApp_Image_2026-08-31_at_11.48.34_1.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
       "Northern Nigeria Drug Abuse Prevention and Community Action Summit",
@@ -508,12 +508,12 @@ export const stakeholderVoices = [
   },
   {
     id: "voice-04",
-    name: "Rtd. General Buba Marwa",
-    role: "Comptroller General / NDLEA",
+    name: "Rtd. Brigadier-General Buba Marwa",
+    role: "Chief Executive Officer / NDLEA",
     category: "PARTNER",
     quote: "“Partner perspective will be added here.”",
     description:
-      "Placeholder partner profile. Replace with verified details and approved wording before publication.",
+      "Retired Brigadier-General Mohamed Buba Marwa is the Chairman and Chief Executive Officer of the National Drug Law Enforcement Agency (NDLEA) in Nigeria",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
@@ -527,9 +527,9 @@ export const leaderVideos = [
     id: "leader-video-01",
     title: "A stakeholder perspective",
     name: "Ibrahim Badamasi Babangida",
-    role: "[Position / Organisation]",
+    role: "Former Military Head of state",
     description:
-      "Placeholder video description. Replace with a verified clip and approved caption.",
+      "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
     videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.35.mp4",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
     voiceId: "voice-01",
@@ -537,10 +537,10 @@ export const leaderVideos = [
   {
     id: "leader-video-02",
     title: "A community perspective",
-    name: "Hon. Aminu Tambuwal",
+    name: "Hon. Aminu Waziri Tambuwal",
     role: "Former Speaker, House Of Representative",
     description:
-      "Placeholder video description. Replace with a verified clip and approved caption.",
+      "Aminu Waziri Tambuwal is a Nigerian lawyer and politician who currently serves as the Senator representing Sokoto South.",
     videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36_2.mp4",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
     voiceId: "voice-02",

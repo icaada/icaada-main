@@ -10,6 +10,7 @@ import {
 } from "@/data/content";
 import { ButtonLink, Eyebrow, HeroCarousel } from "@/components/site";
 import { FeaturedVideo, VoiceCarousel } from "@/components/credibility";
+import Image from "next/image";
 
 export default function Home() {
   const summit = events[0];
@@ -81,7 +82,9 @@ export default function Home() {
               </ButtonLink>
             </div>
             <div className="challenge-panel">
-              <img
+              <Image
+                width={630}
+                height={470}
                 src={photos.community}
                 alt="Community members sharing a conversation outdoors"
                 loading="lazy"
@@ -149,7 +152,9 @@ export default function Home() {
             </p>
           </div>
           <div className="priority-feature">
-            <img
+            <Image
+              width={680}
+              height={510}
               src={strategicPriorities[0].image}
               alt="Community members gathered together"
               loading="lazy"

@@ -1,6 +1,5 @@
 import { ArrowLeft, ArrowRight, ArrowUpRight, Play } from "lucide-react";
 import { useRef, useState } from "react";
-import Link from "next/link";
 import {
   leaderVideos,
   partnershipGroups,
@@ -13,6 +12,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Image from "next/image";
+
 
 type Voice = (typeof stakeholderVoices)[number];
 type LeaderVideo = (typeof leaderVideos)[number];
@@ -43,9 +44,11 @@ export function VoiceDetailModal({
         className="credibility-modal"
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
-        <img src={voice.image} alt="" />
+        <div className="h-full w-full relative">
+          <Image src={voice.image} alt="" fill className="object-cover"/>
+        </div>
         <div className="modal-copy">
-          <Eyebrow>{voice.category} · Placeholder profile</Eyebrow>
+          <Eyebrow>{voice.category} · Profile</Eyebrow>
           <DialogTitle className="credibility-dialog-title">
             {voice.name}
           </DialogTitle>
@@ -56,20 +59,19 @@ export function VoiceDetailModal({
           <p className="modal-role">{voice.role}</p>
           <blockquote>{voice.quote}</blockquote>
           <p>{voice.description}</p>
-          <div className="modal-relationship">
+          {/* <div className="modal-relationship">
             <strong>Placeholder relationship · envisioned event</strong>
             <Link href={`/events/${voice.eventSlug}`} onClick={onClose}>
               {voice.eventLabel} <ArrowUpRight size={14} />
             </Link>
-          </div>
+          </div> */}
           {video && (
             <button
               ref={videoButton}
               className="button-primary modal-video-button"
               onClick={() => setShowVideo(true)}
             >
-              <Play size={15} fill="currentColor" /> View related video
-              placeholder
+              <Play size={15} fill="currentColor" /> Hear what he has to say
             </button>
           )}
         </div>
@@ -113,11 +115,8 @@ export function VoiceCarousel({
           </p>
         </div>
         <div className="voice-composition">
-          <div className="voice-portrait">
-            <img src={voice.image} alt="" />
-            <span className="voice-image-label">
-              Placeholder image · replace before publication
-            </span>
+          <div className="voice-portrait relative">
+            <Image src={voice.image} alt="" fill />
           </div>
           <div className="voice-copy">
             <div className="card-meta">
@@ -285,8 +284,8 @@ export function FeaturedVideo() {
                   onClick={() => setActive(index)}
                   aria-pressed={index === active}
                 >
-                  <span className="video-card-image">
-                    <img src={item.image} alt="" />
+                  <span className="video-card-image relative">
+                    <Image src={item.image} alt="" fill/>
                     <Play size={15} fill="currentColor" />
                   </span>
 
@@ -320,15 +319,21 @@ export function CredibilitySection() {
           </p>
         </div>
         <div className="credibility-gallery">
-          <img
+          <Image
+          width={360}
+          height={480}
             src={stakeholderVoices[0].image}
             alt="Placeholder stakeholder portrait"
           />
-          <img
+          <Image
+          width={360}
+          height={250}
             src={stakeholderVoices[1].image}
             alt="Placeholder community gathering"
           />
-          <img
+          <Image
+          width={360}
+          height={220}
             src={stakeholderVoices[2].image}
             alt="Placeholder youth representatives"
           />
@@ -344,27 +349,27 @@ export function CredibilitySection() {
   );
 }
 
-export function VoiceMediaCard({
-  voice,
-  onOpen,
-}: {
-  voice: Voice;
-  onOpen: (trigger: HTMLButtonElement) => void;
-}) {
-  return (
-    <button
-      className="voice-media-card"
-      onClick={(event) => onOpen(event.currentTarget)}
-    >
-      <img src={voice.image} alt="" />
-      <span className="voice-media-overlay">
-        <Eyebrow>{voice.category}</Eyebrow>
-        <strong>{voice.name}</strong>
-        <small>{voice.role}</small>
-        <span className="link-arrow">
-          View placeholder profile <ArrowUpRight size={14} />
-        </span>
-      </span>
-    </button>
-  );
-}
+// export function VoiceMediaCard({
+//   voice,
+//   onOpen,
+// }: {
+//   voice: Voice;
+//   onOpen: (trigger: HTMLButtonElement) => void;
+// }) {
+//   return (
+//     <button
+//       className="voice-media-card"
+//       onClick={(event) => onOpen(event.currentTarget)}
+//     >
+//       <img src={voice.image} alt="" />
+//       <span className="voice-media-overlay">
+//         <Eyebrow>{voice.category}</Eyebrow>
+//         <strong>{voice.name}</strong>
+//         <small>{voice.role}</small>
+//         <span className="link-arrow">
+//           View placeholder profile <ArrowUpRight size={14} />
+//         </span>
+//       </span>
+//     </button>
+//   );
+// }

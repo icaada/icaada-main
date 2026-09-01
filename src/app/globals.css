@@ -336,7 +336,8 @@
 .hero-carousel-content {
   position: relative;
   z-index: 2;
-  min-height: min(760px, calc(100svh - 116px));
+  height: min(760px, calc(100svh - 116px));
+  margin-top: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -355,7 +356,7 @@
 .hero-carousel .hero-copy h1 {
   max-width: 720px;
   margin: 1rem 0 1.5rem;
-  font-size: clamp(3.25rem, 6vw, 6.4rem);
+  font-size: clamp(3rem, 6vw, 4.5rem);
   letter-spacing: -0.075em;
   color: hsl(var(--primary-foreground));
 }
@@ -448,10 +449,11 @@
   letter-spacing: 0.1em;
 }
 .hero-controls {
+  /* border: 1px solid red; */
   position: absolute;
   left: 2.5rem;
   right: 2.5rem;
-  bottom: 2.2rem;
+  bottom: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1521,7 +1523,7 @@ article[id] {
   margin: 2.5rem 0 1.8rem;
   max-width: 670px;
   font-family: var(--app-font-mono);
-  font-size: clamp(2rem, 4vw, 4.1rem);
+  font-size: clamp(2rem, 4vw, 2.5rem);
   line-height: 1;
   letter-spacing: -0.06em;
 }
@@ -1822,8 +1824,8 @@ article[id] {
 .video-modal {
   display: grid;
   grid-template-columns: 0.8fr 1.2fr;
-  width: min(920px, calc(100% - 2rem));
-  max-width: 920px;
+  width: min(980px, calc(100% - 2rem));
+  max-width: 980px;
   max-height: min(680px, 92vh);
   gap: 0;
   padding: 0;
@@ -1846,7 +1848,7 @@ article[id] {
 .credibility-dialog-title {
   margin: 0.8rem 0 0.25rem;
   font-family: var(--app-font-mono);
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   line-height: 0.98;
   letter-spacing: -0.06em;
 }
@@ -1962,12 +1964,12 @@ article[id] {
 }
 
 .page-hero {
-  padding-block: 5rem 4rem;
+  padding-block: 7rem 4rem;
   border-bottom: 1px solid hsl(var(--border));
 }
 .page-hero h1 {
   max-width: 830px;
-  font-size: clamp(3rem, 7vw, 6rem);
+  font-size: clamp(2.5rem, 7vw, 5rem);
   margin: 0.8rem 0 1.3rem;
 }
 .page-hero p {

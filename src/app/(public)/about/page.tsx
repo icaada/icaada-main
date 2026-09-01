@@ -15,6 +15,7 @@ import {
 } from "@/data/content";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
 import { CredibilitySection } from "@/components/credibility";
+import Image from "next/image";
 
 export default function About() {
   return (
@@ -49,11 +50,15 @@ export default function About() {
             </p>
           </div>
           <div className="portrait-grid">
-            <img
+            <Image
+              width={290}
+              height={270}
               src={photos.community}
               alt="Community members sharing a conversation outdoors"
             />
-            <img
+            <Image
+              width={290}
+              height={270}
               src={photos.meeting}
               alt="People gathered around a table for a community discussion"
             />
@@ -240,8 +245,12 @@ export default function About() {
 
       <section className="section-pad work-band">
         <div className="container-wide program-feature flagship-feature">
-          <img
-            src={"https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_1.jpg"}
+          <Image
+            width={620}
+            height={700}
+            src={
+              "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_1.jpg"
+            }
             alt="Hands joined during a group support session"
             loading="lazy"
           />

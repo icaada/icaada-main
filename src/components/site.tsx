@@ -273,8 +273,8 @@ export function ImageCard({
   children: ReactNode;
 }) {
   return (
-    <div className="editorial-card">
-      <img src={image} alt={alt} loading="lazy" />
+    <div className="editorial-card relative">
+      <Image src={image} alt={alt} loading="lazy" fill />
       {children}
     </div>
   );
