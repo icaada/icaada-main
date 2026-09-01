@@ -468,7 +468,7 @@ export const stakeholderVoices = [
     id: "voice-01",
     name: "Ibrahim Badamasi Babangida",
     role: "Former Military Head of State",
-    category: "STAKEHOLDER",
+    category: "COMMUNITY LEADER",
     quote: "“I call on stakeholders to support ICAADA in combating the abuse and use of illicit drugs.”",
     description:
       "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
@@ -483,7 +483,7 @@ export const stakeholderVoices = [
     name: "Hon. Aminu Waziri Tambuwal",
     role: "Former Speaker, House of Representatives",
     category: "POLITICAL LEADER",
-    quote: "“Community perspective will be added here.”",
+    quote: "“I support the campaign against drug abuse championed by ICAADA. I appeal all well meaning Nigererians to join the campaign.”",
     description:
       "Aminu Waziri Tambuwal is a Nigerian lawyer and politician who currently serves as the Senator representing Sokoto South.",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
@@ -496,8 +496,8 @@ export const stakeholderVoices = [
     id: "voice-03",
     name: "Ahmed Idris",
     role: "Former Accountant General of the federation",
-    category: "ADVOCATE",
-    quote: "“Youth perspective will be added here.”",
+    category: "YOUTH ADVOCATE",
+    quote: "“The youth are the leaders of tomorrow, we have to make sure they are on the right path and totally against the vices of drug addiction & abuse”",
     description:
       "Ahmed Idris (born 25 November 1960) is a Nigerian financial accountant who served as the accountant general of Nigeria",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230616/WhatsApp_Image_2026-08-31_at_11.48.34_1.jpg",
@@ -511,7 +511,7 @@ export const stakeholderVoices = [
     name: "Rtd. Brigadier-General Buba Marwa",
     role: "Chief Executive Officer / NDLEA",
     category: "PARTNER",
-    quote: "“Partner perspective will be added here.”",
+    quote: "“We need the community to support ICAADA and I encourage those who abstain from illicit behaviours to keep up. Those already addicted should seek help”",
     description:
       "Retired Brigadier-General Mohamed Buba Marwa is the Chairman and Chief Executive Officer of the National Drug Law Enforcement Agency (NDLEA) in Nigeria",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
@@ -525,9 +525,9 @@ export const stakeholderVoices = [
 export const leaderVideos = [
   {
     id: "leader-video-01",
-    title: "A stakeholder perspective",
+    title: "A stakeholder's perspective",
     name: "Ibrahim Badamasi Babangida",
-    role: "Former Military Head of state",
+    role: "Former Military Head of State",
     description:
       "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
     videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.35.mp4",
@@ -536,7 +536,7 @@ export const leaderVideos = [
   },
   {
     id: "leader-video-02",
-    title: "A community perspective",
+    title: "A leader's perspective",
     name: "Hon. Aminu Waziri Tambuwal",
     role: "Former Speaker, House Of Representative",
     description:
@@ -547,22 +547,22 @@ export const leaderVideos = [
   },
   {
     id: "leader-video-03",
-    title: "A leader perspective",
+    title: "A leader's perspective",
     name: "Ahmed Idris",
     role: "Former Accountant General of the Federation",
     description:
-      "Placeholder video description. Replace with a verified clip and approved caption.",
+      "Ahmed Idris (born 25 November 1960) is a Nigerian financial accountant who served as the accountant general of Nigeria",
     videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36.mp4",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230617/WhatsApp_Image_2026-08-31_at_11.48.34.jpg",
     voiceId: "voice-03",
   },
   {
     id: "leader-video-04",
-    title: "A partner perspective",
-    name: "Rtd. General Buba Marwa",
-    role: "Comptroler General/NDLEA",
+    title: "A partner's perspective",
+    name: "Rtd. Brigadier-General Buba Marwa",
+    role: "Chief Executive Officer / NDLEA",
     description:
-      "Placeholder video description. Replace with a verified clip and approved caption.",
+      "Retired Brigadier-General Mohamed Buba Marwa is the Chairman and Chief Executive Officer of the National Drug Law Enforcement Agency (NDLEA) in Nigeria",
     videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.32.mp4",
     image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
     voiceId: "voice-04",

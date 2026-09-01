@@ -203,7 +203,7 @@ function VideoModal({
           <small>{video.name} · {video.role}</small>
         </div>
         <div className="modal-copy">
-          <Eyebrow>Featured video placeholder</Eyebrow>
+          <Eyebrow>Featured video</Eyebrow>
           <DialogTitle className="credibility-dialog-title">
             {video.title}
           </DialogTitle>
