@@ -469,10 +469,12 @@ export const stakeholderVoices = [
     name: "Ibrahim Badamasi Babangida",
     role: "Former Military Head of State",
     category: "COMMUNITY LEADER",
-    quote: "“I call on stakeholders to support ICAADA in combating the abuse and use of illicit drugs.”",
+    quote:
+      "“I call on stakeholders to support ICAADA in combating the abuse and use of illicit drugs.”",
     description:
       "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
       "Northern Nigeria Drug Abuse Prevention and Community Action Summit",
@@ -483,10 +485,12 @@ export const stakeholderVoices = [
     name: "Hon. Aminu Waziri Tambuwal",
     role: "Former Speaker, House of Representatives",
     category: "POLITICAL LEADER",
-    quote: "“I support the campaign against drug abuse championed by ICAADA. I appeal all well meaning Nigererians to join the campaign.”",
+    quote:
+      "“I support the campaign against drug abuse championed by ICAADA. I appeal all well meaning Nigererians to join the campaign.”",
     description:
       "Aminu Waziri Tambuwal is a Nigerian lawyer and politician who currently serves as the Senator representing Sokoto South.",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
       "Northern Nigeria Drug Abuse Prevention and Community Action Summit",
@@ -497,10 +501,12 @@ export const stakeholderVoices = [
     name: "Ahmed Idris",
     role: "Former Accountant General of the federation",
     category: "YOUTH ADVOCATE",
-    quote: "“The youth are the leaders of tomorrow, we have to make sure they are on the right path and totally against the vices of drug addiction & abuse”",
+    quote:
+      "“The youth are the leaders of tomorrow, we have to make sure they are on the right path and totally against the vices of drug addiction & abuse”",
     description:
       "Ahmed Idris (born 25 November 1960) is a Nigerian financial accountant who served as the accountant general of Nigeria",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230616/WhatsApp_Image_2026-08-31_at_11.48.34_1.jpg",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230616/WhatsApp_Image_2026-08-31_at_11.48.34_1.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
       "Northern Nigeria Drug Abuse Prevention and Community Action Summit",
@@ -511,10 +517,12 @@ export const stakeholderVoices = [
     name: "Rtd. Brigadier-General Buba Marwa",
     role: "Chief Executive Officer / NDLEA",
     category: "PARTNER",
-    quote: "“We need the community to support ICAADA and I encourage those who abstain from illicit behaviours to keep up. Those already addicted should seek help”",
+    quote:
+      "“We need the community to support ICAADA and I encourage those who abstain from illicit behaviours to keep up. Those already addicted should seek help”",
     description:
       "Retired Brigadier-General Mohamed Buba Marwa is the Chairman and Chief Executive Officer of the National Drug Law Enforcement Agency (NDLEA) in Nigeria",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
     eventSlug: "northern-nigeria-community-action-summit",
     eventLabel:
       "Northern Nigeria Drug Abuse Prevention and Community Action Summit",
@@ -530,8 +538,10 @@ export const leaderVideos = [
     role: "Former Military Head of State",
     description:
       "General Ibrahim Badamasi Babangida, popularly known as IBB, served as Nigeria's military head of state and self-styled 'Military President' from August 27, 1985, until his resignation on August 26, 1993.",
-    videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.35.mp4",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
+    videoUrl:
+      "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.35.mp4",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
     voiceId: "voice-01",
   },
   {
@@ -541,8 +551,10 @@ export const leaderVideos = [
     role: "Former Speaker, House Of Representative",
     description:
       "Aminu Waziri Tambuwal is a Nigerian lawyer and politician who currently serves as the Senator representing Sokoto South.",
-    videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36_2.mp4",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
+    videoUrl:
+      "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36_2.mp4",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230615/WhatsApp_Image_2026-08-31_at_11.48.33_2.jpg",
     voiceId: "voice-02",
   },
   {
@@ -552,8 +564,10 @@ export const leaderVideos = [
     role: "Former Accountant General of the Federation",
     description:
       "Ahmed Idris (born 25 November 1960) is a Nigerian financial accountant who served as the accountant general of Nigeria",
-    videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36.mp4",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230617/WhatsApp_Image_2026-08-31_at_11.48.34.jpg",
+    videoUrl:
+      "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230621/WhatsApp_Video_2026-08-31_at_11.48.36.mp4",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230617/WhatsApp_Image_2026-08-31_at_11.48.34.jpg",
     voiceId: "voice-03",
   },
   {
@@ -563,8 +577,10 @@ export const leaderVideos = [
     role: "Chief Executive Officer / NDLEA",
     description:
       "Retired Brigadier-General Mohamed Buba Marwa is the Chairman and Chief Executive Officer of the National Drug Law Enforcement Agency (NDLEA) in Nigeria",
-    videoUrl: "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.32.mp4",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
+    videoUrl:
+      "https://res.cloudinary.com/dcvyjmflf/video/upload/v1788230620/WhatsApp_Video_2026-08-31_at_11.48.32.mp4",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.31.jpg",
     voiceId: "voice-04",
   },
 ];
@@ -575,7 +591,8 @@ export const heroSlides = [
     title: "Change begins with the community.",
     description:
       "ICAADA mobilises communities to take collective, practical action against drug abuse and build healthier, more resilient futures.",
-    image: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230623/WhatsApp-Image-2023-07-12-at-11.14.36-AM-1.jpg",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230623/WhatsApp-Image-2023-07-12-at-11.14.36-AM-1.jpg",
     alt: "African children and young people gathered outdoors in a community setting",
     location: "Northern Nigeria",
     primary: { label: "Our approach", href: "/our-work" },
@@ -627,5 +644,104 @@ export const heroSlides = [
     location: "A resilient Northern Nigeria",
     primary: { label: "Join the movement", href: "/get-involved" },
     secondary: { label: "Our ambition", href: "/about#ambition" },
+  },
+];
+
+export type TeamMember = {
+  id: string;
+  name: string;
+  position: string;
+  image: string;
+  biography: string;
+  responsibilities: string[];
+  expertise: string[];
+  email?: string;
+  phone?: string;
+  location?: string;
+  socialLinks: { label: string; url: string }[];
+};
+
+export const teamMembers: TeamMember[] = [
+  {
+    id: "member-01",
+    name: "Faisal Sanusi Ibrahim",
+    position: "Director, Volunteers and Events",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1789502827/WhatsApp_Image_2026-09-02_at_20.14.27.jpg",
+    biography:
+      "a seasoned journalist, psychologist, and social justice advocate. He serves as Clinical Director of Solace Wave Therapy in Canada and as Director General of the Center for Visionary Leadership and Human Capital Development. As a media consultant with extensive expertise in narrative control and strategic communication, he helps shape informed public discourse. A member of the United Nations Young African Leaders Initiative, he engages with emerging leaders across the continent on issues of governance, development, and advocacy.",
+    responsibilities: [
+      "Strategic oversight and programme direction",
+      "Multi-stakeholder partnership development",
+      "Resource mobilisation and reporting",
+    ],
+    expertise: [
+      "Community Development",
+      "Programme Management",
+      "Policy Advocacy",
+    ],
+    socialLinks: [],
+  },
+  {
+    id: "member-02",
+    name: "Hamza Mukhtar Usman",
+    position: "Director,Monitoring, Evaluation and Learning",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1789502827/WhatsApp_Image_2026-09-02_at_20.12.23.jpg",
+    biography:
+      "A multidisciplinary academic, Chemical Engineer, safety professional, development consultant, and strategic leader with extensive experience across education, engineering, public health, occupational safety, and community development. He is a Senior Lecturer with expertise in teaching, research, professional training, programme coordination, monitoring and evaluation, and institutional development. He has contributed to international development and public-health initiatives as a Technical Facilitator with WHO and an SBCC Consultant with Abt Associates, supporting capacity building, stakeholder engagement, and behaviour-change interventions. His professional background also includes Human Resource Management, organizational development, staff coordination, capacity building, and institutional strengthening. He has significant experience in strategic advocacy, community and political mobilization, stakeholder engagement, coalition building, and leadership, including serving as National Secretary-General of a major pressure group in Nigeria (The Coalition of Northern Groups - CNG)",
+    responsibilities: [
+      "Strategic Oversight",
+      "Monitoring and Evaluation",
+      "Programme Coordination",
+      "Capacity Building",
+      "Stakeholder Engagement",
+    ],
+    expertise: [
+      "Development Consultant",
+      "Monitoring and Evaluation",
+      "Public Health",
+      "Occupational Safety",
+      "Community Development",
+    ],
+    socialLinks: [],
+  },
+  {
+    id: "member-03",
+    name: "Sadiq Ewaoda Amali ",
+    position: "National Coordinator",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1789502825/WhatsApp_Image_2026-09-03_at_09.27.35.jpg",
+    biography:
+      "A UNODC expert on prison studies, a former Post Doctoral Researcher Fellow at the Department of Criminology and Security Studies University of South Africa, Pretoria. Amali is currently a Professor of Criminology and Security Studies at the Federal University of Lafia. He was once a lecturer at the Federal University Dutse and the University of Fort Hare, South Africa. Amali holds a B.Sc in Sociology and Anthropology from University of Maiduguri in 2008, an M.Sc Sociology from University of Ilorin in 2013 and a PhD in Criminology from University of Fort Hare in 2018. He has published with reputable international journals such as the Security journal, Discovery Global society, ACTA Crimionlogica, sexuality, gender and policy, MDPI(sexes) amongst others.His research interest includes corrections,  policing,  victimology, substance abuse, crime prevention and green criminology.",
+    responsibilities: [
+      "Research & Study",
+      "Liaising with traditional and religious institutions",
+      "Facilitating community dialogues and mapping exercises",
+      "Supporting local prevention clubs",
+    ],
+    expertise: [
+      "Criminology",
+      "Substance Abuse",
+      "Victimology",
+      "Community Development",
+    ],
+    socialLinks: [],
+  },
+  {
+    id: "member-04",
+    name: "Tahir Alhassan",
+    position: "Director-General of Outreach",
+    image:
+      "https://res.cloudinary.com/dcvyjmflf/image/upload/v1789502956/WhatsApp_Image_2026-09-14_at_19.21.29.jpg",
+    biography:
+      "Tahir simultaneously serves as an active Licensed Aircraft Maintenance Engineer and Certifying Engineer, bringing over eight years of technical operations experience on major commercial and executive aircraft. His extensive fleet experience spans the Boeing 737 Classic, Boeing 373 NG, Embraer 135, Embraer 145, Legacy 600 and Legay 650, alongside line maintenance on wide-body Boeing 747 and Boeing 777 fleets. This ongoing technical background instills a deeply ingrained culture of precision, safety, and systemic execution. At ICAADA, Tahir seamlessly translates these technical skill",
+    responsibilities: [
+      "High-level analytical problem-solving ",
+      "Rigorous operational discipline to community development",
+      "Grass-roots advocacy",
+    ],
+    expertise: ["Computer Science", "Aviation Engineering"],
+    socialLinks: [],
   },
 ];

@@ -349,27 +349,27 @@ export function CredibilitySection() {
   );
 }
 
-// export function VoiceMediaCard({
-//   voice,
-//   onOpen,
-// }: {
-//   voice: Voice;
-//   onOpen: (trigger: HTMLButtonElement) => void;
-// }) {
-//   return (
-//     <button
-//       className="voice-media-card"
-//       onClick={(event) => onOpen(event.currentTarget)}
-//     >
-//       <img src={voice.image} alt="" />
-//       <span className="voice-media-overlay">
-//         <Eyebrow>{voice.category}</Eyebrow>
-//         <strong>{voice.name}</strong>
-//         <small>{voice.role}</small>
-//         <span className="link-arrow">
-//           View placeholder profile <ArrowUpRight size={14} />
-//         </span>
-//       </span>
-//     </button>
-//   );
-// }
+export function VoiceMediaCard({
+  voice,
+  onOpen,
+}: {
+  voice: Voice;
+  onOpen: (trigger: HTMLButtonElement) => void;
+}) {
+  return (
+    <button
+      className="voice-media-card"
+      onClick={(event) => onOpen(event.currentTarget)}
+    >
+      <img src={voice.image} alt="" />
+      <span className="voice-media-overlay">
+        <Eyebrow>{voice.category}</Eyebrow>
+        <strong>{voice.name}</strong>
+        <small>{voice.role}</small>
+        <span className="link-arrow">
+          View placeholder profile <ArrowUpRight size={14} />
+        </span>
+      </span>
+    </button>
+  );
+}
