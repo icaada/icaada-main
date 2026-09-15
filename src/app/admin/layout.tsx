@@ -1,15 +1,17 @@
 import { type ReactNode } from 'react';
 import { photos } from '@/data/content';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="admin-auth-layout">
       <div className="admin-auth-brand">
-        <img
+        <Image
           src={photos.community}
           alt="Community members gathered in conversation"
           className="admin-auth-image"
+          fill
         />
         <div className="admin-auth-brand-overlay">
           <Link href="/" className="brand admin-auth-home focus-ring" aria-label="Return to the ICAADA website">

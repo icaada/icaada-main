@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { useParams } from "next/navigation";
 import {
   events,
@@ -12,6 +11,7 @@ import {
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
 import { VoiceCarousel } from "@/components/credibility";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function EventDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -28,9 +28,11 @@ export default function EventDetail() {
       <section className="section-pad">
         <div className="container-wide detail-layout">
           <div className="detail-main">
-            <img
+            <Image
               src={isSummit ? photos.meeting : photos.workshop}
               alt="People gathered around a table during a facilitated conversation"
+              width={850}
+              height={460}
             />
             <div className="prose-copy">
               <h2 className="display">
@@ -147,12 +149,14 @@ export default function EventDetail() {
             </p>
           </div>
           <div className="event-gallery">
-            <img
+            <Image
               src={photos.community}
               alt="Illustrative community gathering"
+              width={540}
+              height={400}
             />
-            <img src={photos.youth} alt="Illustrative youth gathering" />
-            <img src={photos.workshop} alt="Illustrative workshop setting" />
+            <Image width={330} height={300} src={photos.youth} alt="Illustrative youth gathering" />
+            <Image width={330} height={300} src={photos.workshop} alt="Illustrative workshop setting" />
           </div>
         </div>
       </section>

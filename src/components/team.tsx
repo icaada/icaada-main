@@ -78,7 +78,7 @@ export function TeamMemberModal({
       >
         <div className="team-modal-layout">
           <div className="team-modal-sidebar">
-            <img src={member.image} alt="" className="team-modal-photo" />
+            <Image width={470} height={400} src={member.image} alt="" className="team-modal-photo" />
             {(member.email ||
               member.phone ||
               member.location ||

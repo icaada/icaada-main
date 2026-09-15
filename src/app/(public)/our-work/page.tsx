@@ -7,6 +7,7 @@ import {
   strategicPriorities,
 } from "@/data/content";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
+import Image from "next/image";
 
 export default function OurWork() {
   return (
@@ -67,7 +68,7 @@ export default function OurWork() {
                 key={priority.title}
               >
                 <div className="work-priority-image">
-                  <img src={priority.image} alt="" loading="lazy" />
+                  <Image width={470} height={400} src={priority.image} alt="" loading="lazy" />
                 </div>
                 <div className="work-priority-copy">
                   <span className="work-index">{priority.number} / 07</span>
@@ -120,10 +121,12 @@ export default function OurWork() {
 
       <section className="section-pad">
         <div className="container-wide program-feature">
-          <img
+          <Image
             src={photos.meeting}
             alt="People taking part in a stakeholder meeting"
             loading="lazy"
+            width={540}
+            height={400}
           />
           <div className="program-copy">
             <Eyebrow>Work with ICAADA</Eyebrow>

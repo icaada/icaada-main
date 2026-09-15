@@ -9,6 +9,7 @@ import {
 } from "@/data/content";
 import { PageHero } from "@/components/site";
 import Link from "next/link";
+import Image from "next/image";
 
 
 
@@ -26,7 +27,7 @@ export default function NewsDetail() {
       <section className="section-pad">
         <div className="container-wide detail-layout">
           <article className="detail-main">
-            <img src={item.image} alt="" />
+            <Image width={850} height={460} src={item.image} alt="" />
             <div className="prose-copy">
               <p>{item.excerpt}</p>
               <h2 className="display">Prevention starts with the community.</h2>

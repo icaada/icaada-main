@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { mediaItems, stakeholderVoices } from "@/data/content";
 import { Eyebrow, PageHero } from "@/components/site";
 import { VoiceDetailModal, VoiceMediaCard } from "@/components/credibility";
+import Image from "next/image";
 
 export default function Media() {
   const [filter, setFilter] = useState("All");
@@ -97,7 +98,7 @@ export default function Media() {
                   data-testid={`card-media-${index}`}
                 >
                   <div className="media-image">
-                    <img src={item.image} alt="" loading="lazy" />
+                    <Image src={item.image} alt="" loading="lazy" width={850} height={460} />
                     {item.video && (
                       <span className="media-play">
                         <Play size={15} fill="currentColor" />

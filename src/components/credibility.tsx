@@ -361,7 +361,7 @@ export function VoiceMediaCard({
       className="voice-media-card"
       onClick={(event) => onOpen(event.currentTarget)}
     >
-      <img src={voice.image} alt="" />
+      <Image width={470} height={400} src={voice.image} alt="" />
       <span className="voice-media-overlay">
         <Eyebrow>{voice.category}</Eyebrow>
         <strong>{voice.name}</strong>

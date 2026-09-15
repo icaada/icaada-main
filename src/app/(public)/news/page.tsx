@@ -1,15 +1,15 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
+
 "use client";
 
-import { ArrowRight, ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
 import {
-  communityActionModel,
-  frameworkPrinciples,
   news,
 } from "@/data/content";
 import { PageHero } from "@/components/site";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function News() {
   const [filter, setFilter] = useState("All");
@@ -82,7 +82,7 @@ export default function News() {
                 key={item.slug}
                 data-testid={`link-news-${item.slug}`}
               >
-                <img src={item.image} alt="" loading="lazy" />
+                <Image width={470} height={400} src={item.image} alt="" loading="lazy" />
                 <div className="card-meta">
                   <span>{item.category}</span>
                   <span>{item.date}</span>

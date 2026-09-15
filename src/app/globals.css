@@ -3075,11 +3075,11 @@ article[id] {
     display: block;
     width: 45%;
     min-height: 100dvh;
+    position: relative;
   }
 }
 
 .admin-auth-image {
-  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
