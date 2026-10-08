@@ -1,0 +1,380 @@
+// ICAADA data model.
+// Connection URLs live in prisma.config.ts (Prisma 7); the runtime client uses
+// @prisma/adapter-pg via src/lib/prisma.ts. Media fields hold URLs and
+// Cloudinary public IDs only. Never binaries.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+/// Real-world state of an event (the `status` field in the legacy content.ts).
+enum EventPhase {
+  ENVISIONED
+  UPCOMING
+  ONGOING
+  PAST
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+}
+
+enum ProgramStage {
+  CONCEPT
+  PLANNING
+  ACTIVE
+  REVIEW
+  CLOSED
+}
+
+enum PartnerType {
+  INSTITUTIONAL
+  COMMUNITY
+  FUNDER
+  TECHNICAL
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+enum VolunteerStatus {
+  NEW
+  CONTACTED
+  ARCHIVED
+}
+
+enum SubscriberStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+}
+
+// ─── Accounts ───────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(EDITOR)
+  status       AccountStatus @default(ACTIVE)
+  avatarUrl    String?
+  roleTitle    String?
+  /// Admin UI preferences (digest, density, messageAlerts). Shape validated by Zod.
+  preferences  Json          @default("{}")
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  newsPosts        NewsPost[]
+  newsletterDrafts NewsletterDraft[]
+  activity         ActivityLog[]
+
+  @@index([role])
+  @@index([status])
+}
+
+// ─── Content modules ────────────────────────────────────────────────────────
+
+model TeamMember {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  status           ContentStatus @default(DRAFT)
+  publishedAt      DateTime?
+  sortOrder        Int           @default(0)
+  name             String
+  position         String
+  biography        String        @db.Text
+  imageUrl         String?
+  imagePublicId    String?
+  responsibilities String[]      @default([])
+  expertise        String[]      @default([])
+  email            String?
+  phone            String?
+  location         String?
+  /// [{ label, url }]
+  socialLinks      Json          @default("[]")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([status, sortOrder])
+}
+
+model Event {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  status        ContentStatus @default(DRAFT)
+  publishedAt   DateTime?
+  sortOrder     Int           @default(0)
+  title         String
+  type          String
+  location      String
+  description   String        @db.Text
+  body          String?       @db.Text
+  phase         EventPhase    @default(UPCOMING)
+  /// Human-readable date (e.g. "Date to be announced") when no exact date exists.
+  dateLabel     String?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  imageUrl      String?
+  imagePublicId String?
+  /// Editorial note, e.g. "Illustrative UI example".
+  contentNote   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  voices Voice[]
+
+  @@index([status, sortOrder])
+  @@index([phase])
+  @@index([startsAt])
+}
+
+model NewsPost {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  status        ContentStatus @default(DRAFT)
+  publishedAt   DateTime?
+  sortOrder     Int           @default(0)
+  title         String
+  category      String
+  excerpt       String        @db.Text
+  body          String?       @db.Text
+  dateLabel     String?
+  /// Call-to-action label, e.g. "Read perspective".
+  readLabel     String?
+  imageUrl      String?
+  imagePublicId String?
+  authorId      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([status, publishedAt])
+  @@index([category])
+  @@index([authorId])
+}
+
+model MediaItem {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  status        ContentStatus @default(DRAFT)
+  publishedAt   DateTime?
+  sortOrder     Int           @default(0)
+  title         String
+  type          MediaType     @default(IMAGE)
+  /// Display category on /media, e.g. "Photos", "Publications", "Press".
+  category      String
+  description   String?       @db.Text
+  altText       String?
+  dateLabel     String?
+  /// Image or poster/thumbnail.
+  imageUrl      String?
+  imagePublicId String?
+  /// The asset itself when it is not the image (video, document, audio).
+  assetUrl      String?
+  assetPublicId String?
+  voiceId       String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  voice Voice? @relation(fields: [voiceId], references: [id], onDelete: SetNull)
+
+  @@index([status, sortOrder])
+  @@index([category])
+  @@index([voiceId])
+}
+
+/// Stakeholder voices and their (optional) leader video, merged.
+model Voice {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  status           ContentStatus @default(DRAFT)
+  publishedAt      DateTime?
+  sortOrder        Int           @default(0)
+  name             String
+  role             String
+  category         String?
+  quote            String        @db.Text
+  description      String?       @db.Text
+  imageUrl         String?
+  imagePublicId    String?
+  videoTitle       String?
+  videoUrl         String?
+  videoPublicId    String?
+  videoPosterUrl   String?
+  /// Must be true before a voice can be published.
+  consentConfirmed Boolean       @default(false)
+  eventId          String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  event Event?      @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  media MediaItem[]
+
+  @@index([status, sortOrder])
+  @@index([eventId])
+}
+
+/// Strategic priorities / programmes.
+model Program {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  status        ContentStatus @default(DRAFT)
+  publishedAt   DateTime?
+  sortOrder     Int           @default(0)
+  title         String
+  summary       String
+  description   String        @db.Text
+  detail        String?       @db.Text
+  stage         ProgramStage  @default(CONCEPT)
+  featured      Boolean       @default(false)
+  imageUrl      String?
+  imagePublicId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([status, sortOrder])
+}
+
+model Partner {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  status       ContentStatus @default(DRAFT)
+  publishedAt  DateTime?
+  sortOrder    Int           @default(0)
+  name         String
+  type         PartnerType   @default(INSTITUTIONAL)
+  description  String?       @db.Text
+  website      String?
+  logoUrl      String?
+  logoPublicId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status, sortOrder])
+  @@index([type])
+}
+
+// ─── Engagement ─────────────────────────────────────────────────────────────
+
+model ContactMessage {
+  id           String        @id @default(cuid())
+  name         String
+  email        String
+  subject      String
+  body         String        @db.Text
+  status       MessageStatus @default(NEW)
+  replyDraft   String?       @db.Text
+  replySavedAt DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model VolunteerApplication {
+  id           String          @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  state        String
+  lga          String?
+  interests    String[]        @default([])
+  availability String?
+  message      String?         @db.Text
+  status       VolunteerStatus @default(NEW)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model Subscriber {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  name           String?
+  status         SubscriberStatus @default(SUBSCRIBED)
+  subscribedAt   DateTime         @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([status])
+}
+
+model NewsletterDraft {
+  id          String   @id @default(cuid())
+  subject     String
+  body        String   @db.Text
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+  @@index([updatedAt])
+}
+
+// ─── Audit & settings ───────────────────────────────────────────────────────
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  /// e.g. "created", "updated", "deleted", "status.published", "login"
+  action     String
+  /// e.g. "event", "news", "user", "settings"
+  entityType String
+  entityId   String?
+  summary    String
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([entityType, entityId])
+}
+
+/// Single row (id = "workspace").
+model WorkspaceSettings {
+  id            String   @id @default("workspace")
+  workspaceName String
+  contactEmail  String
+  timezone      String   @default("Africa/Lagos")
+  language      String   @default("English")
+  updatedAt     DateTime @updatedAt
+}
