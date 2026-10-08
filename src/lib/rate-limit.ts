@@ -32,6 +32,8 @@ export const rateLimits = {
   contact: { limit: 5, windowMs: 10 * 60_000 },
   volunteer: { limit: 3, windowMs: 10 * 60_000 },
   newsletter: { limit: 5, windowMs: 10 * 60_000 },
+  resetPerIp: { limit: 10, windowMs: 15 * 60_000 },
+  resetPerEmail: { limit: 3, windowMs: 60 * 60_000 },
 } satisfies Record<string, RateLimitRule>;
 
 /** Counts a hit for `key`; throws a 429 ApiError once the limit is exceeded. */

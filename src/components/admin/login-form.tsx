@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PasswordInput } from './password-input';
 
@@ -134,9 +135,9 @@ export function LoginForm() {
           />
           Remember me
         </label>
-        <button type="button" className="admin-text-link focus-ring" disabled={isLoading}>
+        <Link href="/admin/forgot-password" className="admin-text-link focus-ring" data-testid="link-forgot-password">
           Forgot password?
-        </button>
+        </Link>
       </div>
 
       <button

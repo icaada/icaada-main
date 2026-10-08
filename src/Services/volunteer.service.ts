@@ -1,10 +1,10 @@
 import { ApiError } from "@/lib/api/api-error";
-import { notifier } from "@/lib/notifier";
 import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 import { volunteerRepository, type VolunteerRecord } from "@/Repositories/volunteer.repository";
 import { HONEYPOT_FIELD } from "@/Schemas/common.schema";
 import type { VolunteerListQuery, VolunteerSubmitInput, VolunteerUpdateInput } from "@/Schemas/volunteer.schema";
 import { activityService } from "@/Services/activity.service";
+import { notificationService } from "@/Services/notification.service";
 import { pageArgs, pageMeta, type Actor } from "@/Services/service-utils";
 
 export interface VolunteerDto {
@@ -60,7 +60,7 @@ export const volunteerService = {
       message: input.message,
     });
     await activityService.record(null, "received", "volunteer", application.id, `New volunteer application from ${application.name} (${application.state})`);
-    await notifier.notify({ type: "volunteer.received", id: application.id, name: application.name, email: application.email, state: application.state });
+    notificationService.volunteerReceived(application);
   },
 
   async list(query: VolunteerListQuery) {

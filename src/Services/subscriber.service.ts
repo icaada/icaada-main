@@ -1,10 +1,11 @@
 import { ApiError } from "@/lib/api/api-error";
-import { notifier } from "@/lib/notifier";
 import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 import { subscriberRepository, type SubscriberRecord } from "@/Repositories/subscriber.repository";
+import { verifySignedValue } from "@/lib/auth/tokens";
 import { HONEYPOT_FIELD } from "@/Schemas/common.schema";
 import type { SubscribeInput, SubscriberCreateInput, SubscriberListQuery, SubscriberUpdateInput } from "@/Schemas/newsletter.schema";
 import { activityService } from "@/Services/activity.service";
+import { notificationService, UNSUBSCRIBE_PURPOSE } from "@/Services/notification.service";
 import { iso, pageArgs, pageMeta, type Actor } from "@/Services/service-utils";
 
 export interface SubscriberDto {
@@ -46,7 +47,23 @@ export const subscriberService = {
     if (before?.status === "SUBSCRIBED") return;
     const subscriber = await subscriberRepository.upsertSubscribed(input.email, input.name);
     await activityService.record(null, before ? "resubscribed" : "subscribed", "subscriber", subscriber.id, `${subscriber.email} subscribed to the newsletter`);
-    await notifier.notify({ type: "newsletter.subscribed", email: subscriber.email });
+    notificationService.subscriberWelcome(subscriber);
+  },
+
+  /**
+   * One-click unsubscribe from a signed email link. Idempotent; returns false
+   * only when the link is forged or the subscriber no longer exists.
+   */
+  async unsubscribeByToken(token: string | null): Promise<boolean> {
+    const id = verifySignedValue(UNSUBSCRIBE_PURPOSE, token);
+    if (!id) return false;
+    const subscriber = await subscriberRepository.findById(id);
+    if (!subscriber) return false;
+    if (subscriber.status === "SUBSCRIBED") {
+      await subscriberRepository.update(id, { status: "UNSUBSCRIBED", unsubscribedAt: new Date() });
+      await activityService.record(null, "unsubscribed", "subscriber", id, `${subscriber.email} unsubscribed via email link`);
+    }
+    return true;
   },
 
   async list(query: SubscriberListQuery) {

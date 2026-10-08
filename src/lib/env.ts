@@ -30,6 +30,25 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z
     .string()
     .min(20, "looks too short to be a Cloudinary API secret"),
+  /** Public base URL used in emailed links. Falls back to Vercel's production URL, then localhost. */
+  APP_URL: z.string().url("must be a full URL, e.g. https://www.icaada.com.ng").optional(),
+  /** Postmark server API token. Optional: without it, emails are logged instead of sent. */
+  /** "POSTMARK_API_TEST" is Postmark's test token: requests are validated but nothing is delivered. */
+  POSTMARK_SERVER_TOKEN: z
+    .string()
+    .regex(/^(?:[0-9a-f-]{36}|POSTMARK_API_TEST)$/i, "must be a Postmark server token (UUID)")
+    .optional(),
+  /** Verified Postmark sender, e.g. "ICAADA <no-reply@icaada.com.ng>". Required with POSTMARK_SERVER_TOKEN. */
+  EMAIL_FROM: z
+    .string()
+    .regex(/^(?:[^<>]+<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/, 'must be an address or "Name <address>"')
+    .optional(),
+  /** Postmark message stream for transactional mail (default "outbound"). */
+  POSTMARK_MESSAGE_STREAM: z.string().min(1).default("outbound"),
+}).superRefine((env, ctx) => {
+  if (env.POSTMARK_SERVER_TOKEN && !env.EMAIL_FROM) {
+    ctx.addIssue({ code: "custom", path: ["EMAIL_FROM"], message: "is required when POSTMARK_SERVER_TOKEN is set" });
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -52,3 +71,12 @@ export function getEnv(): Env {
 }
 
 export const isProduction = () => process.env.NODE_ENV === "production";
+
+/** Base URL for links in emails (no trailing slash). */
+export function appUrl(): string {
+  const configured = getEnv().APP_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercel) return `https://${vercel}`;
+  return "http://localhost:3000";
+}

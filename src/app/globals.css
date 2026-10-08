@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -50,35 +49,14 @@
   --accent-foreground: 0 0% 100%;
   --destructive: 349 100% 39%;
   --destructive-foreground: 0 0% 100%;
-  --app-font-sans: "DM Sans", sans-serif;
+  --app-font-sans: var(--font-dm-sans), "DM Sans", sans-serif;
   --app-font-serif: Georgia, serif;
-  --app-font-mono: "Space Grotesk", sans-serif;
+  --app-font-mono: var(--font-space-grotesk), "Space Grotesk", sans-serif;
   --radius: 0.35rem;
   --shadow-sm: 0 8px 24px rgba(68, 68, 68, 0.07);
   --shadow-md: 0 16px 42px rgba(68, 68, 68, 0.11);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-}
-
-.dark {
-  --background: 75 10% 15%;
-  --foreground: 42 30% 94%;
-  --border: 75 7% 32%;
-  --input: 75 7% 32%;
-  --ring: 17 43% 59%;
-  --card: 75 9% 20%;
-  --card-foreground: 42 30% 94%;
-  --card-border: 75 7% 32%;
-  --primary: 69 18% 68%;
-  --primary-foreground: 75 10% 15%;
-  --secondary: 75 7% 27%;
-  --secondary-foreground: 42 30% 94%;
-  --muted: 75 7% 27%;
-  --muted-foreground: 42 15% 75%;
-  --accent: 17 43% 59%;
-  --accent-foreground: 75 10% 15%;
-  --destructive: 4 57% 55%;
-  --destructive-foreground: 75 10% 15%;
 }
 
 @layer base {
@@ -280,7 +258,7 @@
     transform 0.2s ease;
 }
 .nav-cta:hover {
-  background: hsl(17 43% 43%);
+  background: hsl(349 100% 32%);
   transform: translateY(-1px);
 }
 .menu-toggle {
@@ -3104,7 +3082,7 @@ article[id] {
 
 .admin-auth-mark {
   background: #ffffff;
-  color: #c90025;
+  color: #c70025;
 }
 
 .admin-auth-home .brand-wordmark small {
@@ -3155,7 +3133,7 @@ article[id] {
 
 .admin-login-kicker {
   margin-bottom: 0.75rem;
-  color: #c90025;
+  color: #c70025;
 }
 
 .admin-title {
@@ -3213,16 +3191,16 @@ article[id] {
 
 .admin-input:focus-visible {
   outline: none;
-  border-color: #c90025;
-  box-shadow: 0 0 0 3px rgba(201, 0, 37, 0.15);
+  border-color: #c70025;
+  box-shadow: 0 0 0 3px rgba(199, 0, 37, 0.15);
 }
 
 .admin-input-error {
-  border-color: #c90025;
+  border-color: #c70025;
 }
 
 .admin-input-error:focus-visible {
-  box-shadow: 0 0 0 3px rgba(201, 0, 37, 0.15);
+  box-shadow: 0 0 0 3px rgba(199, 0, 37, 0.15);
 }
 
 .admin-password-wrapper {
@@ -3279,7 +3257,7 @@ article[id] {
   height: 1rem;
   border: 1px solid hsl(var(--border));
   border-radius: 3px;
-  accent-color: #c90025;
+  accent-color: #c70025;
   cursor: pointer;
 }
 
@@ -3288,7 +3266,7 @@ article[id] {
   border: none;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #c90025;
+  color: #c70025;
   cursor: pointer;
   padding: 0;
   text-decoration: none;
@@ -3306,7 +3284,7 @@ article[id] {
 .admin-button-primary {
   width: 100%;
   padding: 0.85rem;
-  background-color: #c90025;
+  background-color: #c70025;
   color: white;
   border: none;
   border-radius: var(--radius-sm);
@@ -3336,10 +3314,10 @@ article[id] {
 
 .admin-error-message {
   padding: 0.75rem 1rem;
-  background-color: rgba(201, 0, 37, 0.05);
-  border: 1px solid rgba(201, 0, 37, 0.2);
+  background-color: rgba(199, 0, 37, 0.05);
+  border: 1px solid rgba(199, 0, 37, 0.2);
   border-radius: var(--radius-sm);
-  color: #c90025;
+  color: #c70025;
   font-size: 0.85rem;
   font-weight: 600;
   display: flex;
@@ -3427,7 +3405,7 @@ article[id] {
   --admin-paper: #f5f4f0;
   --admin-panel: #fff;
   --admin-line: #dfdfda;
-  --admin-red: #c90025;
+  --admin-red: #c70025;
   --admin-red-dark: #9f001e;
   --admin-blue: #49616c;
   --admin-ochre: #9c7441;
@@ -4530,7 +4508,7 @@ article[id] {
 .adm-icon:focus-visible,
 .adm-chip:focus-visible,
 .adm-message-main:focus-visible {
-  outline: 3px solid rgba(201, 0, 37, 0.4);
+  outline: 3px solid rgba(199, 0, 37, 0.4);
   outline-offset: 2px;
 }
 .adm-icon {
@@ -4577,7 +4555,7 @@ article[id] {
   font-size: 0.85rem;
 }
 .adm-search input:focus {
-  outline: 3px solid rgba(201, 0, 37, 0.3);
+  outline: 3px solid rgba(199, 0, 37, 0.3);
   border-color: var(--admin-red);
 }
 .adm-chips {
@@ -4884,7 +4862,7 @@ article[id] {
   --admin-ink: #292d2e;
   --admin-ink-soft: #5d6463;
   --admin-line: #dfdfda;
-  --admin-red: #c90025;
+  --admin-red: #c70025;
   --admin-red-dark: #9f001e;
 }
 .adm-dialog {
@@ -5088,7 +5066,7 @@ button.admin-shell-popover-link {
   gap: 0.6rem;
   margin: 0.75rem 0 0;
   padding: 0.65rem 0.8rem;
-  border-left: 3px solid #c90025;
+  border-left: 3px solid #c70025;
   background: #faecee;
   color: #9f001e;
   font-size: 0.8rem;
@@ -5159,4 +5137,23 @@ fieldset.field {
 .checkbox-option input {
   width: auto;
   accent-color: hsl(var(--accent));
+}
+
+/* ===== Admin auth: password reset / invite ===== */
+.admin-success-message {
+  padding: 0.85rem 1rem;
+  border-left: 3px solid #2f9266;
+  background: #edf6f1;
+  color: #1e5c40;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.admin-auth-back {
+  margin-top: 1.25rem;
+  font-size: 0.82rem;
+}
+.admin-field-hint {
+  margin: 0.35rem 0 0;
+  color: #5d6463;
+  font-size: 0.75rem;
 }

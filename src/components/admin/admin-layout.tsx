@@ -17,6 +17,7 @@ import {
   Mic2,
   Newspaper,
   Settings,
+  UserCog,
   Users,
   X,
   type LucideIcon,
@@ -31,6 +32,8 @@ type NavigationItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Only shown to administrators (the page and API enforce it as well). */
+  adminOnly?: boolean;
 };
 
 const navigationSections: { label?: string; items: NavigationItem[] }[] = [
@@ -62,13 +65,16 @@ const navigationSections: { label?: string; items: NavigationItem[] }[] = [
   },
   {
     label: 'SETTINGS',
-    items: [{ label: 'Settings', href: '/admin/settings', icon: Settings }],
+    items: [
+      { label: 'Users', href: '/admin/users', icon: UserCog, adminOnly: true },
+      { label: 'Settings', href: '/admin/settings', icon: Settings },
+    ],
   },
 ];
 
 const pageTitles = new Map(navigationSections.flatMap((section) => section.items.map((item) => [item.href, item.label])));
 
-function Sidebar({ location, onNavigate, onLogout }: { location: string; onNavigate: () => void; onLogout: () => void }) {
+function Sidebar({ location, isAdmin, onNavigate, onLogout }: { location: string; isAdmin: boolean; onNavigate: () => void; onLogout: () => void }) {
   return (
     <aside id="admin-navigation" className="admin-shell-sidebar" aria-label="Admin navigation">
       <div className="admin-shell-sidebar-brand">
@@ -86,7 +92,7 @@ function Sidebar({ location, onNavigate, onLogout }: { location: string; onNavig
           <div className="admin-shell-nav-group" key={section.label ?? 'dashboard'}>
             {section.label && <p className="admin-shell-nav-label">{section.label}</p>}
             <div className="admin-shell-nav-items">
-              {section.items.map((item) => {
+              {section.items.filter((item) => isAdmin || !item.adminOnly).map((item) => {
                 const isActive = item.href === '/admin'
                   ? location === '/admin'
                   : location === item.href || location.startsWith(`${item.href}/`);
@@ -172,7 +178,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className={`admin-shell${me.preferences.density === 'Compact' ? ' is-compact' : ''}`}>
       <div className={`admin-shell-sidebar-wrap${menuOpen ? ' is-open' : ''}`}>
-        <Sidebar location={location} onNavigate={() => setMenuOpen(false)} onLogout={logout} />
+        <Sidebar location={location} isAdmin={me.role === 'ADMIN'} onNavigate={() => setMenuOpen(false)} onLogout={logout} />
       </div>
       {menuOpen && (
         <button

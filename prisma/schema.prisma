@@ -98,9 +98,49 @@ model User {
   newsPosts        NewsPost[]
   newsletterDrafts NewsletterDraft[]
   activity         ActivityLog[]
+  sessions         Session[]
+  passwordTokens   PasswordToken[]
 
   @@index([role])
   @@index([status])
+}
+
+/// One signed-in browser. The JWT carries this id; deleting/revoking the row
+/// ends that session even though the JWT itself has not expired.
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum PasswordTokenPurpose {
+  RESET
+  INVITE
+}
+
+/// Single-use link token for password reset / account invite. Only a SHA-256
+/// hash is stored; the raw token exists only in the emailed link.
+model PasswordToken {
+  id        String               @id @default(cuid())
+  userId    String
+  tokenHash String               @unique
+  purpose   PasswordTokenPurpose
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Content modules ────────────────────────────────────────────────────────

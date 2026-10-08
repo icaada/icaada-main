@@ -12,6 +12,8 @@ export interface SessionPayload {
   /** User id. */
   sub: string;
   role: SessionRole;
+  /** Session row id (jti). The session must still exist and be unrevoked in the DB. */
+  sid: string;
 }
 
 function secretKey() {
@@ -22,6 +24,7 @@ export async function signSession(payload: SessionPayload): Promise<string> {
   return new SignJWT({ role: payload.role })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
+    .setJti(payload.sid)
     .setIssuer(ISSUER)
     .setAudience(AUDIENCE)
     .setIssuedAt()
@@ -38,9 +41,9 @@ export async function verifySession(token: string | undefined): Promise<SessionP
       audience: AUDIENCE,
       algorithms: ["HS256"],
     });
-    if (typeof payload.sub !== "string") return null;
+    if (typeof payload.sub !== "string" || typeof payload.jti !== "string") return null;
     if (payload.role !== "ADMIN" && payload.role !== "EDITOR") return null;
-    return { sub: payload.sub, role: payload.role };
+    return { sub: payload.sub, role: payload.role, sid: payload.jti };
   } catch {
     return null;
   }

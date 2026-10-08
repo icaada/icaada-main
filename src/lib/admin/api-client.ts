@@ -57,7 +57,7 @@ export const adminApi = {
   get: <T, M = Record<string, unknown>>(path: string) => request<T, M>('GET', path),
   post: <T, M = Record<string, unknown>>(path: string, body?: unknown) => request<T, M>('POST', path, body ?? {}),
   patch: <T, M = Record<string, unknown>>(path: string, body: unknown) => request<T, M>('PATCH', path, body),
-  del: (path: string) => request<undefined, never>('DELETE', path),
+  del: <T = undefined>(path: string) => request<T, never>('DELETE', path),
 };
 
 /** One readable sentence for a toast, including publish-rule problems from the server. */

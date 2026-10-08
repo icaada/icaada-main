@@ -13,7 +13,8 @@ export type UserPreferences = z.infer<typeof userPreferencesSchema>;
 export const userCreateSchema = z.object({
   name: text(120, "Name"),
   email: emailSchema,
-  password: passwordSchema,
+  /** Omit to email an invite link so the person chooses their own password. */
+  password: passwordSchema.optional(),
   role: roleSchema.default("EDITOR"),
   roleTitle: optionalText(120),
 });
