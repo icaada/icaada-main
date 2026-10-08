@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useLocation } from 'wouter';
 import { mockAdminLogin } from '@/lib/mock-auth';
 import { PasswordInput } from './password-input';
 
@@ -11,7 +11,7 @@ type FieldErrors = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function LoginForm() {
-  const router = useRouter();
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -52,7 +52,7 @@ export function LoginForm() {
       const result = await mockAdminLogin(email.trim(), password);
 
       if (result.success) {
-        router.replace('/admin');
+        setLocation('/admin');
       } else {
         setAuthError(result.message || 'Invalid email or password.');
       }
