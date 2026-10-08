@@ -1,35 +1,54 @@
-"use client";
-
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { useParams } from "next/navigation";
-import {
-  communityActionModel,
-  frameworkPrinciples,
-  news,
-} from "@/data/content";
+import { communityActionModel, frameworkPrinciples } from "@/data/content";
 import { PageHero } from "@/components/site";
 import Link from "next/link";
 import Image from "next/image";
+import { newsService } from "@/Services/news.service";
 
+export const revalidate = 3600;
 
+type Props = { params: Promise<{ slug: string }> };
 
-export default function NewsDetail() {
-  const { slug } = useParams<{ slug: string }>();
-  const item = news.find((article) => article.slug === slug) ?? news[0];
+/** Pre-render every published article; new slugs render on first request. */
+export async function generateStaticParams() {
+  return (await newsService.listPublished()).map((article) => ({ slug: article.slug }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const item = await newsService.getPublishedBySlug((await params).slug);
+  if (!item) return { title: "Article not found" };
+  return {
+    title: item.title,
+    description: item.excerpt,
+    openGraph: { type: "article", ...(item.imageUrl ? { images: [item.imageUrl] } : {}) },
+  };
+}
+
+export default async function NewsDetail({ params }: Props) {
+  const item = await newsService.getPublishedBySlug((await params).slug);
+  if (!item) notFound();
+  const news = await newsService.listPublished();
+  const paragraphs = item.body?.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean) ?? [];
 
   return (
     <>
       <PageHero
-        eyebrow={`${item.category} / ${item.date}`}
+        eyebrow={item.dateLabel ? `${item.category} / ${item.dateLabel}` : item.category}
         title={item.title}
         description={item.excerpt}
       />
       <section className="section-pad">
         <div className="container-wide detail-layout">
           <article className="detail-main">
-            <Image width={850} height={460} src={item.image} alt="" />
+            {item.imageUrl && <Image width={850} height={460} src={item.imageUrl} alt="" />}
             <div className="prose-copy">
               <p>{item.excerpt}</p>
+              {paragraphs.length > 0 ? (
+                paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+              ) : (
+              <>
               <h2 className="display">Prevention starts with the community.</h2>
               <p>
                 Drug abuse is a complex community challenge affecting health,
@@ -76,6 +95,8 @@ export default function NewsDetail() {
                 About ICAADA organizational document and preserves the proposed,
                 envisioned and ambition-based status of future initiatives.
               </p>
+              </>
+              )}
             </div>
           </article>
           <aside className="detail-aside">

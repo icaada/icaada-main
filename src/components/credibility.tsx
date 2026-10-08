@@ -1,10 +1,7 @@
+"use client";
+
 import { ArrowLeft, ArrowRight, ArrowUpRight, Play } from "lucide-react";
 import { useRef, useState } from "react";
-import {
-  leaderVideos,
-  partnershipGroups,
-  stakeholderVoices,
-} from "@/data/content";
 import { Eyebrow } from "@/components/site";
 import {
   Dialog,
@@ -13,25 +10,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import type { PartnerDto } from "@/Services/partner.service";
+import type { VoiceDto } from "@/Services/voice.service";
 
-
-type Voice = (typeof stakeholderVoices)[number];
-type LeaderVideo = (typeof leaderVideos)[number];
+// Stakeholder voices and their leader videos are one Voice record (videoUrl,
+// videoTitle and videoPosterUrl are optional), loaded by the page on the server.
 
 export function VoiceDetailModal({
   voice,
   onClose,
 }: {
-  voice: Voice;
+  voice: VoiceDto;
   onClose: () => void;
 }) {
-  const video = leaderVideos.find((item) => item.id === voice.videoId);
   const [showVideo, setShowVideo] = useState(false);
   const videoButton = useRef<HTMLButtonElement | null>(null);
-  if (showVideo && video)
+  if (showVideo && voice.videoUrl)
     return (
       <VideoModal
-        video={video}
+        voice={voice}
         onClose={() => {
           setShowVideo(false);
           window.setTimeout(() => videoButton.current?.focus(), 0);
@@ -45,27 +42,20 @@ export function VoiceDetailModal({
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <div className="h-full w-full relative">
-          <Image src={voice.image} alt="" fill className="object-cover"/>
+          {voice.imageUrl && <Image src={voice.imageUrl} alt="" fill className="object-cover"/>}
         </div>
         <div className="modal-copy">
-          <Eyebrow>{voice.category} · Profile</Eyebrow>
+          <Eyebrow>{voice.category ? `${voice.category} · ` : ""}Profile</Eyebrow>
           <DialogTitle className="credibility-dialog-title">
             {voice.name}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Placeholder stakeholder profile, statement, related envisioned event
-            and related video.
+            Stakeholder profile, statement and related video.
           </DialogDescription>
           <p className="modal-role">{voice.role}</p>
           <blockquote>{voice.quote}</blockquote>
-          <p>{voice.description}</p>
-          {/* <div className="modal-relationship">
-            <strong>Placeholder relationship · envisioned event</strong>
-            <Link href={`/events/${voice.eventSlug}`} onClick={onClose}>
-              {voice.eventLabel} <ArrowUpRight size={14} />
-            </Link>
-          </div> */}
-          {video && (
+          {voice.description && <p>{voice.description}</p>}
+          {voice.videoUrl && (
             <button
               ref={videoButton}
               className="button-primary modal-video-button"
@@ -80,13 +70,9 @@ export function VoiceDetailModal({
   );
 }
 
-export function VoiceCarousel({
-  voices = stakeholderVoices,
-}: {
-  voices?: Voice[];
-}) {
+export function VoiceCarousel({ voices }: { voices: VoiceDto[] }) {
   const [active, setActive] = useState(0);
-  const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceDto | null>(null);
   const detailOpener = useRef<HTMLButtonElement | null>(null);
   const voice = voices[active] ?? voices[0];
   if (!voice) return null;
@@ -109,14 +95,13 @@ export function VoiceCarousel({
             </h2>
           </div>
           <p>
-            Selected stakeholder perspectives are shown here as replaceable
-            placeholders until verified names, roles, organisations and
-            statements are supplied.
+            Leaders and partners from across Nigeria share why community
+            action against drug abuse matters.
           </p>
         </div>
         <div className="voice-composition">
           <div className="voice-portrait relative">
-            <Image src={voice.image} alt="" fill />
+            {voice.imageUrl && <Image src={voice.imageUrl} alt="" fill />}
           </div>
           <div className="voice-copy">
             <div className="card-meta">
@@ -131,7 +116,7 @@ export function VoiceCarousel({
               <strong>{voice.name}</strong>
               <span>{voice.role}</span>
             </div>
-            <p>{voice.description}</p>
+            {voice.description && <p>{voice.description}</p>}
             <button
               ref={detailOpener}
               className="link-arrow"
@@ -181,10 +166,10 @@ export function VoiceCarousel({
 }
 
 function VideoModal({
-  video,
+  voice,
   onClose,
 }: {
-  video: LeaderVideo;
+  voice: VoiceDto;
   onClose: () => void;
 }) {
   return (
@@ -194,35 +179,35 @@ function VideoModal({
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <div className="video-placeholder">
-          <video controls playsInline className="w-full rounded-lg h-105">
-            <source src={video.videoUrl} type="video/mp4" />
+          <video controls playsInline className="w-full rounded-lg h-105" poster={voice.videoPosterUrl ?? undefined}>
+            <source src={voice.videoUrl ?? undefined} type="video/mp4" />
           </video>
-          {/* <span>
-            <Play size={25} fill="currentColor" />
-          </span> */}
-          <small>{video.name} · {video.role}</small>
+          <small>{voice.name} · {voice.role}</small>
         </div>
         <div className="modal-copy">
           <Eyebrow>Featured video</Eyebrow>
           <DialogTitle className="credibility-dialog-title">
-            {video.title}
+            {voice.videoTitle ?? voice.name}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Static placeholder for a future verified stakeholder video.
+            Video message from {voice.name}.
           </DialogDescription>
           <p className="modal-role">
-            {video.name} · {video.role}
+            {voice.name} · {voice.role}
           </p>
-          <p>{video.description}</p>
+          {voice.description && <p>{voice.description}</p>}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-export function FeaturedVideo() {
+/** Leader/partner videos: every published voice that has a video. */
+export function FeaturedVideo({ voices }: { voices: VoiceDto[] }) {
+  const videos = voices.filter((voice) => voice.videoUrl);
   const [active, setActive] = useState(0);
-  const video = leaderVideos[active];
+  const video = videos[active] ?? videos[0];
+  if (!video) return null;
 
   return (
     <section className="section-pad work-band" id="leaders-partners">
@@ -238,8 +223,7 @@ export function FeaturedVideo() {
 
           <p>
             Hear directly from voices connected to the movement for healthier
-            and more resilient communities. All names, roles and clips below
-            are placeholders for verified material.
+            and more resilient communities.
           </p>
         </div>
 
@@ -250,9 +234,10 @@ export function FeaturedVideo() {
                 key={video.videoUrl}
                 controls
                 playsInline
+                poster={video.videoPosterUrl ?? undefined}
                 className="w-full h-full object-contain"
               >
-                <source src={video.videoUrl} type="video/mp4" />
+                <source src={video.videoUrl ?? undefined} type="video/mp4" />
                 Your browser does not support the video element.
               </video>
             </div>
@@ -265,36 +250,37 @@ export function FeaturedVideo() {
           <div className="featured-video-copy">
             <Eyebrow>Featured perspective</Eyebrow>
 
-            <h3>{video.title}</h3>
+            <h3>{video.videoTitle ?? video.name}</h3>
 
             <strong>{video.name}</strong>
 
             <span>{video.role}</span>
 
-            {/* <p>{video.description}</p> */}
-
             <div className="video-list">
-              {leaderVideos.map((item, index) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`video-card ${
-                    index === active ? "active" : ""
-                  }`}
-                  onClick={() => setActive(index)}
-                  aria-pressed={index === active}
-                >
-                  <span className="video-card-image relative">
-                    <Image src={item.image} alt="" fill/>
-                    <Play size={15} fill="currentColor" />
-                  </span>
+              {videos.map((item, index) => {
+                const thumbnail = item.videoPosterUrl ?? item.imageUrl;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`video-card ${
+                      index === active ? "active" : ""
+                    }`}
+                    onClick={() => setActive(index)}
+                    aria-pressed={index === active}
+                  >
+                    <span className="video-card-image relative">
+                      {thumbnail && <Image src={thumbnail} alt="" fill/>}
+                      <Play size={15} fill="currentColor" />
+                    </span>
 
-                  <span>
-                    <strong>{item.name}</strong>
-                    <small>{item.title}</small>
-                  </span>
-                </button>
-              ))}
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>{item.videoTitle}</small>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -303,7 +289,13 @@ export function FeaturedVideo() {
   );
 }
 
-export function CredibilitySection() {
+export function CredibilitySection({ voices, partners }: { voices: VoiceDto[]; partners: PartnerDto[] }) {
+  const portraits = voices.filter((voice) => voice.imageUrl).slice(0, 3);
+  const sizes = [
+    { width: 360, height: 480 },
+    { width: 360, height: 250 },
+    { width: 360, height: 220 },
+  ];
   return (
     <section className="section-pad credibility-partnership">
       <div className="container-wide">
@@ -319,28 +311,19 @@ export function CredibilitySection() {
           </p>
         </div>
         <div className="credibility-gallery">
-          <Image
-          width={360}
-          height={480}
-            src={stakeholderVoices[0].image}
-            alt="Placeholder stakeholder portrait"
-          />
-          <Image
-          width={360}
-          height={250}
-            src={stakeholderVoices[1].image}
-            alt="Placeholder community gathering"
-          />
-          <Image
-          width={360}
-          height={220}
-            src={stakeholderVoices[2].image}
-            alt="Placeholder youth representatives"
-          />
+          {portraits.map((voice, index) => (
+            <Image
+              key={voice.id}
+              width={sizes[index].width}
+              height={sizes[index].height}
+              src={voice.imageUrl as string}
+              alt={`${voice.name}, ${voice.role}`}
+            />
+          ))}
           <div className="credibility-ecosystem">
-            <span>Collaboration ecosystem · placeholder grouping</span>
-            {partnershipGroups.slice(0, 9).map((partner) => (
-              <strong key={partner}>{partner}</strong>
+            <span>Collaboration ecosystem</span>
+            {partners.slice(0, 9).map((partner) => (
+              <strong key={partner.id}>{partner.name}</strong>
             ))}
           </div>
         </div>
@@ -353,7 +336,7 @@ export function VoiceMediaCard({
   voice,
   onOpen,
 }: {
-  voice: Voice;
+  voice: VoiceDto;
   onOpen: (trigger: HTMLButtonElement) => void;
 }) {
   return (
@@ -361,13 +344,13 @@ export function VoiceMediaCard({
       className="voice-media-card"
       onClick={(event) => onOpen(event.currentTarget)}
     >
-      <Image width={470} height={400} src={voice.image} alt="" />
+      {voice.imageUrl && <Image width={470} height={400} src={voice.imageUrl} alt="" />}
       <span className="voice-media-overlay">
         <Eyebrow>{voice.category}</Eyebrow>
         <strong>{voice.name}</strong>
         <small>{voice.role}</small>
         <span className="link-arrow">
-          View placeholder profile <ArrowUpRight size={14} />
+          View profile <ArrowUpRight size={14} />
         </span>
       </span>
     </button>

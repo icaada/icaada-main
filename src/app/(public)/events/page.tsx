@@ -1,46 +1,17 @@
-"use client";
-
-import { ArrowUpRight, MapPin } from "lucide-react";
-import { useState } from "react";
-import { events } from "@/data/content";
+import type { Metadata } from "next";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
-import Link from "next/link";
+import { EventsList } from "@/components/public/events-list";
+import { eventService } from "@/Services/event.service";
 
-function EventCard({ event }: { event: (typeof events)[number] }) {
-  return (
-    <div className="event-card">
-      <div className="date-tile">
-        <strong>{event.status === "Envisioned" ? "●" : "○"}</strong>
-        <span>{event.status}</span>
-      </div>
-      <div>
-        <div className="card-meta">
-          <span>{event.type}</span>
-          <span>
-            <MapPin size={12} /> {event.location}
-          </span>
-        </div>
-        <h3>{event.title}</h3>
-        <p>{event.description}</p>
-        <Link
-          href={`/events/${event.slug}`}
-          className="link-arrow"
-          data-testid={`link-event-${event.slug}`}
-        >
-          View event concept <ArrowUpRight size={15} />
-        </Link>
-      </div>
-    </div>
-  );
-}
+export const revalidate = 3600;
 
-export default function Events() {
-  const [filter, setFilter] = useState("All");
-  const types = ["All", "Upcoming", "Ongoing", "Past", "Envisioned"];
-  const filtered =
-    filter === "All"
-      ? events
-      : events.filter((event) => event.status === filter);
+export const metadata: Metadata = {
+  title: "Events",
+  description: "ICAADA events and convenings: community dialogues, youth programmes, learning exchanges and the envisioned Northern Nigeria Community Action Summit.",
+};
+
+export default async function Events() {
+  const events = await eventService.listPublished();
 
   return (
     <>
@@ -59,23 +30,7 @@ export default function Events() {
               completed ICAADA activities.
             </p>
           </div>
-          <div className="filter-row" role="group" aria-label="Filter events">
-            {types.map((type) => (
-              <button
-                key={type}
-                className={`filter-button ${filter === type ? "active" : ""}`}
-                onClick={() => setFilter(type)}
-                data-testid={`button-event-filter-${type.toLowerCase()}`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-          <div style={{ maxWidth: "900px" }}>
-            {filtered.map((event) => (
-              <EventCard key={event.slug} event={event} />
-            ))}
-          </div>
+          <EventsList events={events} />
         </div>
       </section>
       <section

@@ -1,10 +1,17 @@
-"use client";
-
+import type { Metadata } from "next";
 import { PageHero } from "@/components/site";
-import { teamMembers } from "@/data/content";
 import { TeamGrid } from "@/components/team";
+import { teamMemberService } from "@/Services/team-member.service";
 
-export default function Team() {
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Our team",
+  description: "Meet the people working together to advance ICAADA's mission of community action against drug abuse.",
+};
+
+export default async function Team() {
+  const members = await teamMemberService.listPublished();
   return (
     <>
       <PageHero
@@ -14,15 +21,7 @@ export default function Team() {
       />
       <section className="section-pad">
         <div className="container-wide">
-          {/* <div className="content-note team-directory-note">
-            <strong>Placeholder directory</strong>
-            <p>
-              The source material does not identify real ICAADA staff. Names,
-              roles, biographies and images below are replaceable mock content
-              and must be verified before publication.
-            </p>
-          </div> */}
-          <TeamGrid members={teamMembers} />
+          <TeamGrid members={members} />
         </div>
       </section>
     </>

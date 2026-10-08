@@ -1,9 +1,29 @@
+"use client";
+
 import { Check, Facebook, Instagram, Linkedin } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { Honeypot } from "@/components/public/honeypot";
+import { HONEYPOT_NAME, submitPublicForm } from "@/lib/public-form";
 
 export function Footer() {
   const [subscribed, setSubscribed] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const subscribe = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setSending(true);
+    setError(null);
+    const result = await submitPublicForm("newsletter/subscribe", {
+      email: String(data.get("email") ?? ""),
+      [HONEYPOT_NAME]: String(data.get(HONEYPOT_NAME) ?? ""),
+    });
+    setSending(false);
+    if (result.ok) setSubscribed(true);
+    else setError(result.fieldErrors.email ?? result.message);
+  };
   return (
     <footer className="site-footer">
       <div className="container-wide footer-grid">
@@ -65,7 +85,7 @@ export function Footer() {
         <div>
           <div className="footer-title">Connect</div>
           <div className="footer-links">
-            <Link href="/get-involved" data-testid="link-footer-volunteer">
+            <Link href="/get-involved#volunteer" data-testid="link-footer-volunteer">
               Volunteer with us
             </Link>
             <Link href="/get-involved" data-testid="link-footer-partner">
@@ -90,24 +110,25 @@ export function Footer() {
               <Check size={15} /> You’re on the list. Thank you.
             </p>
           ) : (
-            <form
-              className="newsletter-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubscribed(true);
-              }}
-            >
-              <input
-                type="email"
-                required
-                placeholder="Your email address"
-                aria-label="Your email address"
-                data-testid="input-newsletter-email"
-              />
-              <button type="submit" data-testid="button-newsletter-submit">
-                Join
-              </button>
-            </form>
+            <>
+              <form className="newsletter-form" onSubmit={subscribe}>
+                <Honeypot />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="Your email address"
+                  aria-label="Your email address"
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? "newsletter-error" : undefined}
+                  data-testid="input-newsletter-email"
+                />
+                <button type="submit" disabled={sending} data-testid="button-newsletter-submit">
+                  {sending ? "…" : "Join"}
+                </button>
+              </form>
+              {error && <p id="newsletter-error" role="alert" data-testid="status-newsletter-error">{error}</p>}
+            </>
           )}
         </div>
       </div>

@@ -1,5 +1,4 @@
-"use client";
-
+import type { Metadata } from "next";
 import {
   BookOpen,
   Building2,
@@ -9,6 +8,12 @@ import {
   Users,
 } from "lucide-react";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
+import { VolunteerForm } from "@/components/public/volunteer-form";
+
+export const metadata: Metadata = {
+  title: "Get involved",
+  description: "Volunteer, partner or start a community conversation with ICAADA.",
+};
 
 const paths = [
   {
@@ -83,7 +88,7 @@ export default function GetInvolved() {
                 <h3>{path.title}</h3>
                 <p>{path.text}</p>
                 <ButtonLink
-                  href="/contact"
+                  href={path.title === "Individuals" ? "#volunteer" : "/contact"}
                   secondary
                   testId={`link-involved-${path.title.toLowerCase().replaceAll(" ", "-").replaceAll("&", "and")}`}
                 >
@@ -92,6 +97,20 @@ export default function GetInvolved() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+      <section className="section-pad" id="volunteer">
+        <div className="container-wide contact-grid">
+          <div>
+            <Eyebrow>Volunteer with ICAADA</Eyebrow>
+            <h2 className="display">Lend your time to community action.</h2>
+            <p>
+              Tell us where you are and how you would like to help. Our team
+              reviews every application and will contact you about
+              opportunities near you.
+            </p>
+          </div>
+          <VolunteerForm />
         </div>
       </section>
       <section className="section-pad work-band">

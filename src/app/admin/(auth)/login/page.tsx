@@ -5,7 +5,7 @@ import { LoginForm } from '@/components/admin/login-form';
 import { getCurrentActor } from '@/lib/auth/auth-guard';
 
 export const metadata: Metadata = {
-  title: 'Sign in · ICAADA Admin',
+  title: 'Admin sign in',
   robots: { index: false, follow: false },
 };
 

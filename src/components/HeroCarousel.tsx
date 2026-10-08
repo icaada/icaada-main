@@ -1,9 +1,10 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { Eyebrow } from "./Eyebrow";
 import { ArrowRight, MapPin } from "lucide-react";
-import { ButtonLink } from "./ButtonLink";
-import { heroSlides } from "@/helpers";
 import Image from "next/image";
+import { heroSlides } from "@/data/content";
+import { ButtonLink, Eyebrow } from "@/components/site";
 
 export function HeroCarousel() {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -12,10 +13,6 @@ export function HeroCarousel() {
   const [isFocused, setIsFocused] = useState(false);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
   const isPaused = userPaused || isHovered || isFocused || isReducedMotion;
-
-
-  
-
   const slide = heroSlides[activeSlide];
 
   useEffect(() => {
@@ -35,18 +32,12 @@ export function HeroCarousel() {
     return () => window.clearInterval(timer);
   }, [isPaused]);
 
-  const selectSlide = (index: number) => {
-    setActiveSlide(index);
-  };
-
   const moveSlide = (direction: number) => {
     setActiveSlide(
       (current) =>
         (current + direction + heroSlides.length) % heroSlides.length,
     );
   };
-
-  
 
   return (
     <section
@@ -73,7 +64,7 @@ export function HeroCarousel() {
             key={item.title}
             aria-hidden={index !== activeSlide}
           >
-            <Image src={item.image} alt={item.alt} fill/>
+            <Image src={item.image} alt={item.alt} fill className="object-contain object-top"/>
           </div>
         ))}
       </div>
@@ -116,7 +107,7 @@ export function HeroCarousel() {
                 role="tab"
                 aria-selected={index === activeSlide}
                 aria-label={`Show slide ${index + 1}: ${item.eyebrow}`}
-                onClick={() => selectSlide(index)}
+                onClick={() => setActiveSlide(index)}
                 data-testid={`button-hero-slide-${index + 1}`}
               >
                 {index === activeSlide ? (
