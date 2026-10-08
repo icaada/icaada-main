@@ -7,6 +7,8 @@ export interface Actor {
   name: string;
   email: string;
   role: Role;
+  /** The Session row behind this request (absent for system/background actors). */
+  sessionId?: string;
 }
 
 export function pageArgs(query: { page: number; pageSize: number }) {

@@ -15,3 +15,8 @@ export const passwordSchema = z
   .max(200)
   .regex(/[a-z]/i, "Include at least one letter.")
   .regex(/\d/, "Include at least one number.");
+
+export const passwordResetRequestSchema = z.object({ email: emailSchema });
+export const passwordTokenSchema = z.object({ token: z.string().min(20).max(200) });
+export const passwordResetConfirmSchema = passwordTokenSchema.extend({ password: passwordSchema });
+export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmSchema>;

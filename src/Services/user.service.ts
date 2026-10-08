@@ -1,5 +1,7 @@
 import { ApiError } from "@/lib/api/api-error";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { randomToken } from "@/lib/auth/tokens";
+import { sessionRepository } from "@/Repositories/session.repository";
 import { userRepository, type UserRecord } from "@/Repositories/user.repository";
 import {
   userPreferencesSchema,
@@ -11,6 +13,7 @@ import {
   type UserUpdateInput,
 } from "@/Schemas/user.schema";
 import { activityService } from "@/Services/activity.service";
+import { passwordService } from "@/Services/password.service";
 import { iso, pageArgs, pageMeta, type Actor } from "@/Services/service-utils";
 
 /** Public shape of a user. Never includes passwordHash. */
@@ -80,9 +83,11 @@ export const userService = {
       email: input.email,
       role: input.role,
       roleTitle: input.roleTitle,
-      passwordHash: await hashPassword(input.password),
+      // No password given: store an unguessable one and email an invite link instead.
+      passwordHash: await hashPassword(input.password ?? randomToken()),
     });
-    await activityService.record(actor, "created", "user", user.id, `Created ${user.role.toLowerCase()} account for ${user.name}`);
+    if (!input.password) await passwordService.issuePasswordLink(user, "INVITE", actor.name);
+    await activityService.record(actor, "created", "user", user.id, `Created ${user.role.toLowerCase()} account for ${user.name}${input.password ? "" : " and sent an invite"}`);
     return toUserDto(user);
   },
 
@@ -104,6 +109,8 @@ export const userService = {
       roleTitle: input.roleTitle,
       ...(input.password ? { passwordHash: await hashPassword(input.password) } : {}),
     });
+    // Disabling or resetting the password ends every session for that user.
+    if (input.status === "DISABLED" || input.password) await sessionRepository.revokeAllForUser(id);
     const changes = [
       input.role && input.role !== target.role ? `role → ${input.role}` : null,
       input.status && input.status !== target.status ? `status → ${input.status}` : null,
@@ -119,6 +126,24 @@ export const userService = {
     await assertKeepsAnAdmin(target);
     await userRepository.delete(id);
     await activityService.record(actor, "deleted", "user", id, `Deleted account for ${target.name}`);
+  },
+
+  /** Emails an invite (never signed in) or a reset link (has signed in before). */
+  async sendPasswordLink(actor: Actor, id: string) {
+    const target = await getUser(id);
+    if (target.status !== "ACTIVE") throw ApiError.conflict("Enable this account before sending a password link.");
+    const purpose = target.lastLoginAt ? "RESET" : "INVITE";
+    await passwordService.issuePasswordLink(target, purpose, actor.name);
+    await activityService.record(actor, purpose === "INVITE" ? "invite.sent" : "password.reset_sent", "user", id, `Sent ${purpose === "INVITE" ? "an invite" : "a password reset link"} to ${target.email}`);
+    return { purpose };
+  },
+
+  /** Signs the user out on every device. */
+  async revokeSessions(actor: Actor, id: string) {
+    const target = await getUser(id);
+    const revoked = await sessionRepository.revokeAllForUser(id, target.id === actor.id ? actor.sessionId : undefined);
+    await activityService.record(actor, "sessions.revoked", "user", id, `Signed ${target.name} out of ${revoked} session(s)`);
+    return { revoked };
   },
 
   // ── Own profile (any signed-in user) ─────────────────────────────────────
@@ -147,6 +172,8 @@ export const userService = {
       throw ApiError.validation(undefined, { currentPassword: ["Current password is incorrect."] });
     }
     await userRepository.update(actor.id, { passwordHash: await hashPassword(input.newPassword) });
-    await activityService.record(actor, "password.changed", "profile", actor.id, `${user.name} changed their password`);
+    // Keep this browser signed in; sign out everywhere else.
+    const revoked = await sessionRepository.revokeAllForUser(actor.id, actor.sessionId);
+    await activityService.record(actor, "password.changed", "profile", actor.id, `${user.name} changed their password${revoked ? `; ${revoked} other session(s) signed out` : ""}`);
   },
 };

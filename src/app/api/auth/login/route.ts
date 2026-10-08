@@ -6,7 +6,7 @@ import { authService } from "@/Services/auth.service";
 
 export const POST = handle(async (request: Request) => {
   const input = await parseBody(request, loginSchema);
-  const { token, user } = await authService.login(input, getClientIp(request));
+  const { token, user } = await authService.login(input, getClientIp(request), request.headers.get("user-agent"));
   await setSessionCookie(token, { persistent: input.remember !== false });
   return ok(user);
 });

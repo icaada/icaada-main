@@ -25,7 +25,7 @@ const entityRoutes: Record<string, { label: string; href: string }> = {
   volunteer: { label: 'Volunteers', href: '/admin/volunteers' },
   settings: { label: 'Settings', href: '/admin/settings' },
   profile: { label: 'Profile', href: '/admin/settings' },
-  user: { label: 'Accounts', href: '/admin/settings' },
+  user: { label: 'Users', href: '/admin/users' },
 };
 
 export default function AdminDashboard() {

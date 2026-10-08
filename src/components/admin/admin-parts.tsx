@@ -33,6 +33,8 @@ const statusStyles: Record<string, { className: string; label: string }> = {
   unread: { className: 'unread', label: 'Unread' },
   read: { className: 'read', label: 'Read' },
   contacted: { className: 'read', label: 'Contacted' },
+  active: { className: 'published', label: 'Active' },
+  disabled: { className: 'archived', label: 'Disabled' },
   subscribed: { className: 'subscribed', label: 'Subscribed' },
   unsubscribed: { className: 'unsubscribed', label: 'Unsubscribed' },
 };

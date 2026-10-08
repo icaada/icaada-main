@@ -68,7 +68,7 @@ The admin workspace is meant to stay visually separate from the public site, so 
 | `--admin-paper` | `#F5F4F0` | Warm off-white app background |
 | `--admin-panel` | `#FFFFFF` | Panels and cards |
 | `--admin-line` | `#DFDFDA` | Borders |
-| `--admin-red` | `#C90025` | Brand red (hex form of the accent) |
+| `--admin-red` | `#C70025` | Brand red (same as the public accent) |
 | `--admin-red-dark` | `#9F001E` | Pressed/hover red |
 | `--admin-blue` | `#49616C` | "Archived" and info states |
 | `--admin-ochre` | `#9C7441` | "Review" and warning states |
@@ -85,7 +85,7 @@ The admin workspace is meant to stay visually separate from the public site, so 
 
 ## 3. Typography
 
-Fonts load from Google Fonts with an `@import` at the top of `globals.css`.
+Fonts are self-hosted through `next/font/google` in `src/app/layout.tsx` (no request to Google at runtime). Their CSS variables (`--font-dm-sans`, `--font-space-grotesk`) feed `--app-font-sans` and `--app-font-mono` in `globals.css`.
 
 | Role | Family | Weights | CSS var |
 |---|---|---|---|
@@ -151,7 +151,7 @@ Fonts load from Google Fonts with an `@import` at the top of `globals.css`.
 ## 6. Iconography & imagery
 
 - **Icons:** [`lucide-react`](https://lucide.dev). Common ones are `ArrowRight`, `ArrowUpRight`, `MapPin`, `Menu`, `X`, and social icons (Instagram, LinkedIn, Facebook). Typical sizes are 12–17px inline and 24px for the menu.
-- **Photography:** documentary and community-centred images of real people, gatherings and workshops. Production images are served from **Cloudinary** (`res.cloudinary.com/dcvyjmflf/**`, allow-listed in `next.config.ts`). The legacy `src/helpers.ts` (imported only by the unused `HeroCarousel.tsx`) still points at Unsplash.
+- **Photography:** documentary and community-centred images of real people, gatherings and workshops. Production images are served from **Cloudinary** (`res.cloudinary.com/dcvyjmflf/**`, allow-listed in `next.config.ts`).
 - Every image needs meaningful `alt` text. The content model carries an `alt` field for each image.
 
 ---
@@ -185,25 +185,27 @@ From the copy in `src/data/content.ts` and the components:
 
 - **Radix UI** primitives (accordion, dialog, dropdown, popover, select, tabs, toast, tooltip and others)
 - `class-variance-authority`, `clsx`, `tailwind-merge` (through `cn()` in `src/lib/utils.ts`)
-- `lucide-react` and `react-icons` for icons
+- `lucide-react` for icons
 - `react-hook-form`, `zod`, `@hookform/resolvers` for forms
 - `sonner` for toasts, `vaul` for drawers, `cmdk` for the command palette, `embla-carousel-react`, `react-day-picker`, `input-otp`, `react-resizable-panels`, `recharts`
-- `framer-motion`, `next-themes`, `@tanstack/react-query`, `date-fns`: installed, but **not imported** by app code (`next-themes` appears only in `ui/sonner.tsx`)
+- Runtime libraries are in `dependencies`; build tooling (Tailwind, TypeScript, ESLint, Prisma CLI, tsx) is in `devDependencies`
 
 ### Dev tooling
 
-- **Package manager:** pnpm 10.14.0 (`packageManager` field). `pnpm-workspace.yaml` skips the build scripts for `sharp` and `unrs-resolver`
+- **Package manager:** pnpm 10.14.0 (`packageManager` field). `pnpm-workspace.yaml` allows the build scripts for Prisma, bcrypt and esbuild
 - **Lint:** ESLint 9 with `eslint-config-next` (core-web-vitals and TypeScript) in `eslint.config.mjs`
-- **Scripts:** `pnpm dev` · `pnpm build` · `pnpm start` · `pnpm lint`
+- **Scripts:** `pnpm dev` · `pnpm build` · `pnpm start` · `pnpm lint` · `pnpm db:*` (see README)
 
 ---
 
 ## Known inconsistencies
 
-These are things to settle so the brand stays consistent:
+Resolved in October 2026:
 
-1. **Two footer copies.** The live `src/components/Footer.tsx` (used by `(public)/layout.tsx`) expands ICAADA as **"International Centre for Advocacy"**, shows `© 2025 … A Nigerian nonprofit`, and uses `hello@icaada.org`. The unused footer in `site.tsx` uses the correct **"Initiative for Community Action Against Drug Abuse"**. The live footer should be brought in line.
-2. **Fonts loaded twice.** `src/app/layout.tsx` loads Geist and Geist Mono through `next/font`, but the CSS uses DM Sans and Space Grotesk from a Google Fonts `@import`. Load DM Sans and Space Grotesk through `next/font/google` and remove Geist.
-3. **Leftover dark theme.** The `.dark` block uses an olive/terracotta palette (`--accent: 17 43% 59%`) from an earlier template. It is unused and off-brand. `.nav-cta:hover` also uses a terracotta `hsl(17 43% 43%)` where a darker red is expected.
-4. **Accent hex drift.** The public accent computes to `#C70025`, while the admin hard-codes `#C90025`. Pick one.
-5. **Duplicate components.** `ButtonLink`, `Eyebrow`, `HeroCarousel` and `Footer` exist both as standalone files and inside `site.tsx`.
+- **Footer name.** The live footer now expands ICAADA correctly ("Initiative for Community Action Against Drug Abuse") and shows the current year.
+- **Fonts.** DM Sans and Space Grotesk load once, through `next/font`. Geist and the Google Fonts `@import` are gone.
+- **Dark theme.** The unused olive/terracotta `.dark` palette was removed (the class-based `dark:` variant stays opt-in). `.nav-cta:hover` now uses the darker brand red `hsl(349 100% 32%)`.
+- **Accent hex.** The admin now uses `#C70025`, the same red as the public accent.
+- **Duplicate components.** The standalone `ButtonLink.tsx` and `Eyebrow.tsx` were deleted; `site.tsx` is the single source, and `HeroCarousel.tsx` holds the carousel.
+
+Nothing is currently open. Add new items here when the code and this guide disagree.

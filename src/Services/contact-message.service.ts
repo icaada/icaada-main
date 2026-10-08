@@ -1,10 +1,10 @@
 import { ApiError } from "@/lib/api/api-error";
-import { notifier } from "@/lib/notifier";
 import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 import { contactMessageRepository, type ContactMessageRecord } from "@/Repositories/contact-message.repository";
 import { HONEYPOT_FIELD } from "@/Schemas/common.schema";
 import type { ContactSubmitInput, MessageListQuery, MessageUpdateInput } from "@/Schemas/contact.schema";
 import { activityService } from "@/Services/activity.service";
+import { notificationService } from "@/Services/notification.service";
 import { iso, pageArgs, pageMeta, type Actor } from "@/Services/service-utils";
 
 export interface ContactMessageDto {
@@ -52,7 +52,7 @@ export const contactMessageService = {
       body: input.body,
     });
     await activityService.record(null, "received", "message", message.id, `New message from ${message.name}: “${message.subject}”`);
-    await notifier.notify({ type: "contact.received", id: message.id, name: message.name, email: message.email, subject: message.subject });
+    notificationService.contactReceived(message);
   },
 
   async list(query: MessageListQuery) {

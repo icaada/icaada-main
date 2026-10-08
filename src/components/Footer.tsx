@@ -31,7 +31,7 @@ export function Footer() {
           <div className="brand">
             <span className="brand-mark">IC</span>
             <span className="brand-wordmark">
-              ICAADA<small>International Centre for Advocacy</small>
+              ICAADA<small>Initiative for Community Action Against Drug Abuse</small>
             </span>
           </div>
           <p>
@@ -134,7 +134,7 @@ export function Footer() {
       </div>
       <div className="container-wide footer-bottom">
         <span>
-          © 2025 ICAADA. A Nigerian nonprofit for healthier communities.
+          © {new Date().getFullYear()} ICAADA. A Nigerian nonprofit for healthier communities.
         </span>
         <span>Built on dignity, evidence and the possibility of change.</span>
       </div>

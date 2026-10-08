@@ -53,7 +53,6 @@ icaada-main/
 │   └── seed.ts                Dev users + content.ts → PUBLISHED rows (idempotent)
 ├── postcss.config.mjs         Tailwind v4 PostCSS plugin
 ├── eslint.config.mjs          Active ESLint config (next core-web-vitals + TS)
-├── eslint.config.mts          Second, generic flat config (unused by `next lint`)
 ├── tsconfig.json              strict, bundler resolution, @/* → src/*
 ├── pnpm-workspace.yaml        Allowed build scripts (prisma, bcrypt, esbuild)
 ├── public/                    Default Next SVGs only
@@ -83,14 +82,13 @@ icaada-main/
     │   ├── env.ts             Zod-validated env (getEnv)
     │   ├── prisma.ts          Prisma client singleton (Repositories only)
     │   ├── api/               api-error · response (ok/handle) · request (parse) · content-routes
-    │   ├── auth/              session (JWT) · cookies · password (bcrypt) · auth-guard
+    │   ├── auth/              session (JWT) · cookies · password (bcrypt) · tokens (reset/unsubscribe) · auth-guard
     │   ├── cache.ts           unstable_cache wrappers + revalidateContent()
     │   ├── rate-limit.ts      In-memory fixed-window limiter
     │   ├── cloudinary.ts      Upload signature helper
-    │   ├── notifier.ts        Notification interface (logs for now)
+    │   ├── email/             mailer.ts (Postmark HTTP API) · templates.ts (branded, escaped HTML + text)
     │   ├── slug.ts            slugify / uniqueSlug
     │   └── utils.ts           cn() = clsx + tailwind-merge
-    └── helpers.ts             Legacy Unsplash photo map
 ```
 
 ---
@@ -236,10 +234,20 @@ Unknown errors are logged server-side and return a generic 500. The real message
 
 ### 5.5 Auth
 
-- **Session:** an HS256 JWT signed with `jose` (`SESSION_SECRET`, 7-day expiry), stored in an HTTP-only `icaada_session` cookie with `sameSite: "lax"`, `path: "/"`, and `secure` in production.
-- **Guards** reload the user from the database on every request. Disabling, demoting or deleting a user therefore takes effect immediately, even while their JWT is still valid.
-- **Login** returns the same message for an unknown email, a wrong password or a disabled account, and compares against a dummy bcrypt hash when the email is unknown so the timing matches. It is rate-limited to 5 attempts per IP and email per 15 minutes, and 30 per IP.
-- **No public registration.** Accounts come from the seed or `POST /api/admin/users` (ADMIN).
+- **Sessions are server-side.** Login creates a `Session` row. The HTTP-only `icaada_session` cookie holds an HS256 JWT (`jose`, `SESSION_SECRET`, 7 days) whose `jti` is that row's id. The cookie is `sameSite: "lax"`, `path: "/"`, and `secure` in production.
+- **Every request re-checks the database.** `resolveSession()` loads the session together with its user, and rejects the request if the session is revoked or expired, or the user is disabled. Revocation therefore takes effect on the very next request, not when the JWT expires.
+- **Revocation:**
+  - Logout revokes that browser's session.
+  - Changing your own password revokes your *other* sessions.
+  - A password reset, an admin-set password, or disabling an account revokes *all* of that user's sessions.
+  - Admins also have "Sign out everywhere" (`DELETE /api/admin/users/[id]/sessions`).
+  - Deleting a user cascades to their sessions.
+- **Login** returns the same message for an unknown email, a wrong password or a disabled account, and compares against a dummy bcrypt hash when the email is unknown so the timing matches. It is rate-limited to 5 attempts per IP and email per 15 minutes, and 30 per IP. "Remember me" off gives a browser-session cookie.
+- **Password links** (`PasswordToken`, `src/Services/password.service.ts`): 256-bit random tokens, stored only as SHA-256 hashes, single-use. Issuing a new link invalidates the user's older ones.
+  - **Reset:** valid for 1 hour, from "Forgot password?" (`/admin/forgot-password` → `POST /api/auth/password/forgot`, which always answers the same way) or sent by an admin.
+  - **Invite:** valid for 3 days. New users are created without a password and get an invite email.
+  - Both links open `/admin/reset-password?token=…`, which calls `POST /api/auth/password/check` and then `POST /api/auth/password/reset`. Setting the password signs out every session. Forgot and reset requests are rate-limited per IP, and per email (3 per hour).
+- **No public registration.** Accounts come from the seed or the admin **Users** screen (`/admin/users`, ADMIN only: invite, edit role and status, send a password link, sign out everywhere, delete).
 - **Self-protection:** admins cannot change their own role or status, cannot delete themselves, and the last active admin cannot be demoted, disabled or deleted.
 - `passwordHash` never leaves the repository layer. `UserDto` omits it.
 
@@ -278,7 +286,15 @@ DTO fields differ from the old `content.ts` shapes. Watch for `imageUrl` (was `i
 
 - **Env:** `src/lib/env.ts` validates formats with Zod, not just presence: Postgres URLs, a secret of at least 32 characters, the cloud-name pattern, a numeric API key.
 - **Rate limiting:** `src/lib/rate-limit.ts` keeps counters in memory per instance. Use Redis before scaling out.
-- **Notifications:** `src/lib/notifier.ts` defines the interface. The current implementation only logs; plug in email later.
+- **Email** (`src/Services/notification.service.ts` → `src/lib/email/`):
+  - Sent through Postmark's HTTP API, configured by `POSTMARK_SERVER_TOKEN`, `EMAIL_FROM` and `POSTMARK_MESSAGE_STREAM`.
+  - Delivery runs in `after()`, so it never slows down or fails the request; failures are logged.
+  - Without a token, emails are printed to the log in development and skipped in production.
+  - Links use `APP_URL`, falling back to the Vercel production URL.
+  - **Staff alerts:** new contact messages and volunteer applications go to the workspace **contact email** (Settings), with reply-to set to the sender.
+  - **Account emails:** invites and password resets.
+  - **Newsletter welcome:** a signed, stateless unsubscribe link (HMAC with `SESSION_SECRET`) plus the RFC 8058 `List-Unsubscribe` and `List-Unsubscribe-Post` headers. `GET /api/public/newsletter/unsubscribe` redirects to `/newsletter/unsubscribed`, and `POST` serves mail clients' one-click unsubscribe.
+  - Newsletter *issues* are not sent yet (drafts only).
 - **Pool size:** `DATABASE_POOL_MAX` (optional) caps connections per instance. Set it to 1 when using `prisma dev`, whose PGlite server accepts only one connection.
 
 ---
@@ -374,18 +390,12 @@ pnpm db:studio            # browse data
 
 | Priority | Item |
 |---|---|
-| Medium | Admin users screen on top of `/api/admin/users`; a password-reset flow (needs an email provider) |
-| Medium | Sessions are stateless JWTs: logout clears the cookie, but a copied token stays valid until it expires (7 days). If that matters, add a token version on `User` and bump it on logout and password change |
-| **High** | Fix the footer copy (it says "International Centre for Advocacy"). See BRAND.md |
-| Low | Split the nav out of `(public)/layout.tsx` so the layout can be a server component |
-| Medium | Load DM Sans and Space Grotesk via `next/font` and drop the unused Geist fonts and the CSS `@import` |
-| Medium | Clean `package.json`: React is declared in both `dependencies` (19.2.8) and `devDependencies` (^19.1.0 / react-dom 19.1.0); remove the Vite/Replit leftovers (`@vitejs/plugin-react`, `@tailwindcss/vite`, `@replit/vite-plugin-*`); move runtime libs (Radix, lucide, zod, …) into `dependencies`; drop unused packages (`framer-motion`, `@tanstack/react-query`) |
-| Low | Delete the duplicate `ButtonLink.tsx`, `Eyebrow.tsx`, `HeroCarousel.tsx` and the legacy `Shell`/`Footer` in `site.tsx`; delete `eslint.config.mts` and `helpers.ts` |
-| Low | Remove or rebrand the unused `.dark` theme; split `globals.css` |
-| Low | Replace the boilerplate `README.md`; add tests (selectors already exist) and CI |
+| Medium | Newsletter sending: a Postmark *broadcast* stream, batch sends, and a per-issue unsubscribe link (the signed link and headers already exist) |
+| Medium | Add API integration tests (the contract checks used during development can become permanent) and a CI workflow: lint, type-check, build |
 | Medium | Move rate limiting to a shared store (Redis/Upstash) before running more than one server instance |
-| Medium | Add a signed unsubscribe link/endpoint before sending any newsletter; choose an email provider and implement `Notifier` |
-| Low | Add API integration tests (the request/response contracts are stable) |
+| Low | Double opt-in for newsletter sign-ups (send a confirm link before subscribing) |
+| Low | Split the nav out of `(public)/layout.tsx` so the layout can be a server component |
+| Low | Split `globals.css` (~5k lines) by area or into CSS Modules |
 
 ---
 
