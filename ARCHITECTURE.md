@@ -13,9 +13,9 @@ This document describes how the ICAADA web application is structured, how data a
 │  Next.js 16 App Router  (React 19 · React Compiler · TS strict)            │
 │                                                                            │
 │  Public website (public)        Admin workspace /admin (session-guarded)   │
-│  pages still read content.ts    client screens call /api/admin/**          │
-│        │  (can call services            │                                │
-│        │   directly, see §5.6)           ▼                                │
+│  Server Components call          client screens call /api/admin/**          │
+│        │  services directly              │                                │
+│        │  (ISR, see §4/§5.6)             ▼                                │
 │        │                  ┌──────────────────────────────┐                 │
 │        │                  │ Route Handlers  src/app/api/ │  Zod validation │
 │        │                  │   ▼  auth guard (cookie/JWT) │                 │
@@ -32,7 +32,7 @@ This document describes how the ICAADA web application is structured, how data a
 ```
 
 - A **layered backend** (Route Handler → Guard → Service → Repository → Prisma → PostgreSQL) owns all content, inbox, newsletter, users and settings data. It mirrors the Academy LMS architecture. See §5.
-- `src/data/content.ts` is still what the public pages render. The seed copies it into the database as PUBLISHED records. Swapping pages over to the services is the next step (§5.6).
+- Public pages are Server Components that read published content straight from the services (§4, §5.6), and the contact, volunteer and newsletter forms post to `/api/public/**`. `src/data/content.ts` now holds only page copy, plus the original module data that the seed imports.
 - Media lives on **Cloudinary**. The database stores only URLs and public IDs, and browsers upload directly with a server-signed signature.
 - The admin workspace (§6) is fully wired to the API: a server layout checks the session, and the client screens read and write through `/api/admin/**`.
 
@@ -77,7 +77,7 @@ icaada-main/
     ├── generated/prisma/      Generated Prisma client. Git-ignored, never hand-edited
     ├── components/            (unchanged; see §4, §6)
     ├── data/
-    │   └── content.ts         Static site content (pages still read it; seed source)
+    │   └── content.ts         Page copy (hero, values, model…) + original module data for the seed
     ├── hooks/                 use-mobile, use-toast (shadcn)
     ├── lib/
     │   ├── env.ts             Zod-validated env (getEnv)
@@ -110,29 +110,29 @@ icaada-main/
 
 | URL | File | Data sources |
 |---|---|---|
-| `/` | `(public)/page.tsx` | `heroSlides`, `strategicPriorities`, `communityActionModel`, `events`, `photos` |
-| `/about` | `about/page.tsx` | `coreValues`, `frameworkPrinciples`, `innovationAgenda`, `sustainabilitySteps`, `impactAmbition`, … |
-| `/our-work` | `our-work/page.tsx` | `strategicPriorities`, `communityActionModel`, `partnershipGroups` |
-| `/team` | `team/page.tsx` | `teamMembers` → `<TeamGrid>` |
-| `/events`, `/events/[slug]` | `events/…` | `events` (lookup by `slug`, **falls back to `events[0]`**) |
-| `/news`, `/news/[slug]` | `news/…` | `news` (same slug lookup) |
-| `/media` | `media/page.tsx` | `mediaItems`, `leaderVideos`, `stakeholderVoices` |
-| `/get-involved` | `get-involved/page.tsx` | Static copy |
-| `/contact` | `contact/page.tsx` | Form with `preventDefault()`. The backend endpoint `POST /api/public/contact` exists but the form is not wired to it yet |
+| `/` | `(public)/page.tsx` | programs, events (first ENVISIONED as the flagship), voices · copy: `heroSlides`, `communityActionModel` |
+| `/about` | `about/page.tsx` | programs, partners, voices · copy: values, principles, innovation agenda, … |
+| `/our-work` | `our-work/page.tsx` | programs · copy: `communityActionModel` |
+| `/team` | `team/page.tsx` | team members → `<TeamGrid>` |
+| `/events`, `/events/[slug]` | `events/…` | events (+ voices linked by `eventId`). Unknown or unpublished slug → **404** |
+| `/news`, `/news/[slug]` | `news/…` | news posts. The editor's `body` is shown when present; unknown slug → **404** |
+| `/media` | `media/page.tsx` | media items, voices |
+| `/get-involved` | `get-involved/page.tsx` | Copy + `<VolunteerForm>` → `POST /api/public/volunteers` |
+| `/contact` | `contact/page.tsx` | `<ContactForm>` → `POST /api/public/contact` (lands in the admin inbox) |
 
-Dynamic routes read the slug on the client with `useParams()`. They do not use `generateStaticParams` and do not call `notFound()`, so an unknown slug renders the first item instead of a 404. The fix comes with the service swap in §5.6.
+The footer's newsletter form posts to `POST /api/public/newsletter/subscribe`. Every form includes the hidden `company` honeypot and shows server field errors inline.
 
 ---
 
 ## 4. Rendering model
 
-**Decision: every page is a Client Component today.** Each file in `(public)/` begins with `"use client"`, and so does the group layout, because it needs `usePathname()` and mobile-menu state.
-
-- **Why:** the site was ported from a client-side SPA (Vite + wouter). Marking whole pages `"use client"` was the quickest way to keep hooks, carousels and modals working unchanged.
-- **Consequences:**
-  - The pages still pre-render to HTML at build time, since static client pages are SSR'd. However, all page JS ships to the browser and per-page `metadata` cannot be exported. Only the root `metadata` exists, so every page shares one `<title>`.
-  - `site.tsx` has no `"use client"` directive. It works only because client pages import it.
-- **Suggested direction:** make pages Server Components, push `"use client"` down to the interactive leaves (`HeroCarousel`, `VoiceCarousel`, team modals, mobile nav), add `generateMetadata`, `generateStaticParams` and `notFound()` to the `[slug]` routes, and move the nav into its own small client component so `(public)/layout.tsx` can be a server layout.
+**Decision: public pages are Server Components with ISR.** Each page `await`s the services (no HTTP hop) and exports `revalidate = 3600`, so pages are pre-rendered at build and served statically.
+- **Freshness:** admin mutations call `revalidateContent()`, which invalidates the module's cache tag and the public paths that render it. The next visitor sees a publish, edit, unpublish or delete immediately; the hourly revalidation is only a backstop.
+- **Detail pages:** `events/[slug]` and `news/[slug]` export `generateStaticParams` (every published slug is pre-built), `generateMetadata`, and call `notFound()` for unknown or unpublished slugs. Slugs published later render on their first request.
+- **Interactive leaves stay client components** and receive DTOs as props: `HeroCarousel`, `VoiceCarousel`/`VoiceDetailModal`/`FeaturedVideo` (`credibility.tsx`), the team cards and modal (`team.tsx`), the filters (`components/public/events-list.tsx`, `news-list.tsx`, `media-gallery.tsx`) and the forms (`contact-form.tsx`, `volunteer-form.tsx`, `Footer.tsx`).
+- **Hook-free building blocks:** `site.tsx` (`Eyebrow`, `ButtonLink`, `PageHero`, `ImageCard`) has no hooks, so Server Components can import it.
+- **Metadata:** the root layout sets a title template (`%s · ICAADA`), and each page exports its own `title` and `description`.
+- **Still client:** `(public)/layout.tsx` needs `usePathname()` for the nav. Its children are still server-rendered; splitting the nav into its own component would let the layout become a server component.
 
 **React Compiler** is on (`reactCompiler: true`), so components are memoised automatically and manual `useMemo`/`useCallback` is rarely needed.
 
@@ -245,27 +245,24 @@ Unknown errors are logged server-side and return a generic 500. The real message
 
 ### 5.6 Using the backend from Server Components
 
-Public pages should call the **services directly**, not over HTTP. These are the same functions behind `/api/public/**`:
+Public pages call the **services directly**, not over HTTP. These are the same functions behind `/api/public/**`:
 
 ```tsx
-// src/app/(public)/events/[slug]/page.tsx (after removing "use client")
-import { notFound } from "next/navigation";
-import { eventService } from "@/Services/event.service";
+// src/app/(public)/events/[slug]/page.tsx (simplified)
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  return (await eventService.listPublished()).map((event) => ({ slug: event.slug }));
+}
 
 export default async function EventDetail({ params }: { params: Promise<{ slug: string }> }) {
   const event = await eventService.getPublishedBySlug((await params).slug);
-  if (!event) notFound(); // fixes today's fallback-to-events[0] bug
-  return <EventView event={event} />; // keep interactive bits in small client components
+  if (!event) notFound();
+  // …render; interactive parts are client components that receive DTOs as props
 }
 ```
 
-To migrate a page:
-1. Remove `"use client"`.
-2. Replace `import { events } from "@/data/content"` with `await eventService.listPublished()`.
-3. Pass the DTOs to client components as props.
-4. Call `notFound()` on `null`.
-
-DTO field names differ slightly from `content.ts` (for example `imageUrl` instead of `image`, `phase` instead of `status`, and `dateLabel` instead of `date`), so adjust the components that consume them.
+DTO fields differ from the old `content.ts` shapes. Watch for `imageUrl` (was `image`), `phase` (was `status`), `dateLabel` (was `date`), `slug` for anchors (was `anchor`), and `summary` (was `short`). Display helpers such as `phaseLabel`, `eventDateText` and `pad2` live in `src/lib/display.ts`.
 
 **Caching** (Next 16 without Cache Components):
 - `listPublished` and `getPublishedBySlug` are wrapped in `unstable_cache`, tagged `content:<module>`, with a one-hour backstop.
@@ -365,7 +362,8 @@ pnpm db:deploy            # production: prisma migrate deploy
 pnpm db:studio            # browse data
 ```
 
-- **Env:** every variable in `.env.example` is required at runtime. `src/instrumentation.ts` validates them when the server boots, and the server refuses to start with a list of what is wrong. `next build` does **not** need them: env and the DB client are created lazily, at first use.
+- **Env:** every variable in `.env.example` is required at runtime. `src/instrumentation.ts` validates them when the server boots, and the server refuses to start with a list of what is wrong.
+- **`next build` needs the database.** Public pages pre-render from the DB at build time, so the build environment needs the same variables (Vercel provides them) and a reachable, migrated database. Run `prisma migrate deploy` before deploying schema changes.
 - **Seed accounts:** `admin@example.org` / `dev-admin-password-123` (ADMIN) and `editor@example.org` / `dev-editor-password-123` (EDITOR), unless the `SEED_*` vars are set. The seed refuses the fake defaults when `NODE_ENV=production`.
 - **Prisma 7 notes:** connection URLs live in `prisma.config.ts` (CLI, `DIRECT_URL`) and `src/lib/prisma.ts` (runtime, `DATABASE_URL` via `@prisma/adapter-pg`), not in `schema.prisma`. `migrate dev` no longer seeds automatically, so run `db seed` yourself.
 - **Hosting:** any Node host with PostgreSQL works (Vercel + Neon/Supabase, Railway, etc.). Use a pooled `DATABASE_URL` and a direct `DIRECT_URL` where the provider offers both. There is no Dockerfile or CI config in the repo.
@@ -378,9 +376,8 @@ pnpm db:studio            # browse data
 |---|---|
 | Medium | Admin users screen on top of `/api/admin/users`; a password-reset flow (needs an email provider) |
 | Medium | Sessions are stateless JWTs: logout clears the cookie, but a copied token stays valid until it expires (7 days). If that matters, add a token version on `User` and bump it on logout and password change |
-| **High** | Swap public pages from `content.ts` to the services and add `notFound()` (§5.6). Then wire the contact, volunteer and newsletter forms to `/api/public/**` |
 | **High** | Fix the footer copy (it says "International Centre for Advocacy"). See BRAND.md |
-| Medium | Convert pages to Server Components, add per-page metadata, `generateStaticParams` and `notFound()` for slugs |
+| Low | Split the nav out of `(public)/layout.tsx` so the layout can be a server component |
 | Medium | Load DM Sans and Space Grotesk via `next/font` and drop the unused Geist fonts and the CSS `@import` |
 | Medium | Clean `package.json`: React is declared in both `dependencies` (19.2.8) and `devDependencies` (^19.1.0 / react-dom 19.1.0); remove the Vite/Replit leftovers (`@vitejs/plugin-react`, `@tailwindcss/vite`, `@replit/vite-plugin-*`); move runtime libs (Radix, lucide, zod, …) into `dependencies`; drop unused packages (`framer-motion`, `@tanstack/react-query`) |
 | Low | Delete the duplicate `ButtonLink.tsx`, `Eyebrow.tsx`, `HeroCarousel.tsx` and the legacy `Shell`/`Footer` in `site.tsx`; delete `eslint.config.mts` and `helpers.ts` |

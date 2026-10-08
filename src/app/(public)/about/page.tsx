@@ -1,5 +1,4 @@
-"use client";
-
+import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import {
@@ -8,16 +7,31 @@ import {
   frameworkPrinciples,
   impactAmbition,
   innovationAgenda,
-  partnershipGroups,
   photos,
-  strategicPriorities,
   sustainabilitySteps,
 } from "@/data/content";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
 import { CredibilitySection } from "@/components/credibility";
 import Image from "next/image";
+import { pad2 } from "@/lib/display";
+import { partnerService } from "@/Services/partner.service";
+import { programService } from "@/Services/program.service";
+import { voiceService } from "@/Services/voice.service";
 
-export default function About() {
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "Why ICAADA exists, how the Community Action Model works, our values, priorities and the partnership ecosystem behind community action against drug abuse.",
+};
+
+export default async function About() {
+  const [strategicPriorities, partners, voices] = await Promise.all([
+    programService.listPublished(),
+    partnerService.listPublished(),
+    voiceService.listPublished(),
+  ]);
   return (
     <>
       <PageHero
@@ -196,17 +210,17 @@ export default function About() {
             </p>
           </div>
           <div className="priority-detail-list">
-            {strategicPriorities.map((priority) => (
+            {strategicPriorities.map((priority, index) => (
               <article
                 className={`priority-detail ${priority.featured ? "is-featured" : ""}`}
-                id={priority.anchor}
-                key={priority.title}
+                id={priority.slug}
+                key={priority.id}
               >
-                <div className="priority-detail-number">{priority.number}</div>
+                <div className="priority-detail-number">{pad2(index + 1)}</div>
                 <div>
                   <h3>{priority.title}</h3>
                   <p>{priority.description}</p>
-                  <p className="priority-detail-note">{priority.detail}</p>
+                  {priority.detail && <p className="priority-detail-note">{priority.detail}</p>}
                 </div>
               </article>
             ))}
@@ -361,16 +375,16 @@ export default function About() {
             </p>
           </div>
           <div className="ecosystem">
-            {partnershipGroups.map((partner, index) => (
-              <span key={partner} className={index < 3 ? "is-emphasis" : ""}>
-                {partner}
+            {partners.map((partner, index) => (
+              <span key={partner.id} className={index < 3 ? "is-emphasis" : ""}>
+                {partner.name}
               </span>
             ))}
           </div>
         </div>
       </section>
 
-      <CredibilitySection />
+      <CredibilitySection voices={voices} partners={partners} />
 
       <section className="section-pad">
         <div className="container-wide">

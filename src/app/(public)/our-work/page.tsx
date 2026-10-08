@@ -1,21 +1,27 @@
-"use client";
-
+import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
-import {
-  communityActionModel,
-  photos,
-  strategicPriorities,
-} from "@/data/content";
+import { communityActionModel, photos } from "@/data/content";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
 import Image from "next/image";
+import { pad2 } from "@/lib/display";
+import { programService } from "@/Services/program.service";
 
-export default function OurWork() {
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Our work",
+  description:
+    "ICAADA's strategic priorities: community prevention, youth resilience, recovery support, families, trusted institutions, evidence and partnerships across Northern Nigeria.",
+};
+
+export default async function OurWork() {
+  const strategicPriorities = await programService.listPublished();
   return (
     <>
       <PageHero
         eyebrow="Our work"
         title="Community-led action for prevention, resilience and appropriate support."
-        description="ICAADA organises its work around seven strategic priorities that connect communities, young people, trusted institutions, evidence and partnerships across Northern Nigeria."
+        description="ICAADA organises its work around strategic priorities that connect communities, young people, trusted institutions, evidence and partnerships across Northern Nigeria."
       />
 
       <section className="section-pad">
@@ -64,17 +70,17 @@ export default function OurWork() {
             {strategicPriorities.map((priority, index) => (
               <article
                 className={`work-priority ${priority.featured ? "is-featured" : ""}`}
-                id={priority.anchor}
-                key={priority.title}
+                id={priority.slug}
+                key={priority.id}
               >
                 <div className="work-priority-image">
-                  <Image width={470} height={400} src={priority.image} alt="" loading="lazy" />
+                  {priority.imageUrl && <Image width={470} height={400} src={priority.imageUrl} alt="" loading="lazy" />}
                 </div>
                 <div className="work-priority-copy">
-                  <span className="work-index">{priority.number} / 07</span>
+                  <span className="work-index">{pad2(index + 1)} / {pad2(strategicPriorities.length)}</span>
                   <h2>{priority.title}</h2>
                   <p className="work-priority-lead">{priority.description}</p>
-                  <p>{priority.detail}</p>
+                  {priority.detail && <p>{priority.detail}</p>}
                   {index < strategicPriorities.length - 1 && (
                     <span className="work-next">
                       Next: {strategicPriorities[index + 1].title}{" "}

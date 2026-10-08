@@ -1,19 +1,26 @@
-"use client";
-
 import { ArrowUpRight, MapPin } from "lucide-react";
 import Link from "next/link";
-import {
-  communityActionModel,
-  events,
-  photos,
-  strategicPriorities,
-} from "@/data/content";
-import { ButtonLink, Eyebrow, HeroCarousel } from "@/components/site";
+import { communityActionModel, photos } from "@/data/content";
+import { ButtonLink, Eyebrow } from "@/components/site";
+import { HeroCarousel } from "@/components/HeroCarousel";
 import { FeaturedVideo, VoiceCarousel } from "@/components/credibility";
 import Image from "next/image";
+import { pad2, phaseLabel } from "@/lib/display";
+import { eventService } from "@/Services/event.service";
+import { programService } from "@/Services/program.service";
+import { voiceService } from "@/Services/voice.service";
 
-export default function Home() {
-  const summit = events[0];
+// Static, regenerated hourly and immediately when admins publish changes.
+export const revalidate = 3600;
+
+export default async function Home() {
+  const [events, priorities, voices] = await Promise.all([
+    eventService.listPublished(),
+    programService.listPublished(),
+    voiceService.listPublished(),
+  ]);
+  const summit = events.find((event) => event.phase === "ENVISIONED") ?? events[0];
+  const [lead, ...otherPriorities] = priorities;
 
   return (
     <>
@@ -143,7 +150,7 @@ export default function Home() {
             <div>
               <Eyebrow>Where we focus</Eyebrow>
               <h2 className="display">
-                Seven priorities. One connected response.
+                {priorities.length === 7 ? "Seven" : priorities.length} priorities. One connected response.
               </h2>
             </div>
             <p>
@@ -151,48 +158,53 @@ export default function Home() {
               evidence, safety and partnership across Northern Nigeria.
             </p>
           </div>
-          <div className="priority-feature">
-            <Image
-              width={680}
-              height={510}
-              src={strategicPriorities[0].image}
-              alt="Community members gathered together"
-              loading="lazy"
-            />
-            <div>
-              <span className="work-index">
-                {strategicPriorities[0].number} / PRIORITY
-              </span>
-              <h3>{strategicPriorities[0].title}</h3>
-              <p>{strategicPriorities[0].description}</p>
-              <ButtonLink
-                href="/our-work#community-prevention"
-                secondary
-                testId="link-home-community-prevention"
-              >
-                Explore community prevention
-              </ButtonLink>
+          {lead && (
+            <div className="priority-feature">
+              {lead.imageUrl && (
+                <Image
+                  width={680}
+                  height={510}
+                  src={lead.imageUrl}
+                  alt="Community members gathered together"
+                  loading="lazy"
+                />
+              )}
+              <div>
+                <span className="work-index">
+                  {pad2(1)} / PRIORITY
+                </span>
+                <h3>{lead.title}</h3>
+                <p>{lead.description}</p>
+                <ButtonLink
+                  href={`/our-work#${lead.slug}`}
+                  secondary
+                  testId="link-home-community-prevention"
+                >
+                  Explore {lead.title.toLowerCase()}
+                </ButtonLink>
+              </div>
             </div>
-          </div>
+          )}
           <div className="priority-grid">
-            {strategicPriorities.slice(1, 7).map((priority) => (
+            {otherPriorities.slice(0, 6).map((priority, index) => (
               <Link
-                href={`/our-work#${priority.anchor}`}
+                href={`/our-work#${priority.slug}`}
                 className="priority-item focus-ring"
-                key={priority.title}
+                key={priority.id}
               >
-                <span className="work-index">{priority.number}</span>
+                <span className="work-index">{pad2(index + 2)}</span>
                 <h3>{priority.title}</h3>
-                <p>{priority.short}</p>
+                <p>{priority.summary}</p>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <VoiceCarousel />
-      <FeaturedVideo />
+      <VoiceCarousel voices={voices} />
+      <FeaturedVideo voices={voices} />
 
+      {summit && (
       <section
         className="section-pad"
         style={{ background: "hsl(var(--secondary))" }}
@@ -216,7 +228,7 @@ export default function Home() {
           <div className="event-card flagship-event">
             <div className="date-tile">
               <strong>●</strong>
-              <span>{summit.status}</span>
+              <span>{phaseLabel[summit.phase]}</span>
             </div>
             <div>
               <div className="card-meta">
@@ -238,6 +250,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       <section className="cta-block section-pad">
         <div className="container-wide cta-inner">

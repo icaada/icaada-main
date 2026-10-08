@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { ArrowRight, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { useRef, useState } from "react";
 import {
@@ -8,7 +10,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { TeamMember } from "@/data/content";
+import type { TeamMemberDto as TeamMember } from "@/Services/team-member.service";
 import Image from "next/image";
 
 export function TeamGrid({ members }: { members: TeamMember[] }) {
@@ -39,13 +41,15 @@ export function TeamMemberCard({ member }: { member: TeamMember }) {
         aria-label={`View profile of ${member.name}`}
       >
         <div className="w-full h-65 relative">
+          {member.imageUrl && (
             <Image
-          src={member.image}
-          alt=""
-          loading="lazy"
-          fill
-          className="team-member-photo object-cover object-top"
-        />
+              src={member.imageUrl}
+              alt=""
+              loading="lazy"
+              fill
+              className="team-member-photo object-cover object-top"
+            />
+          )}
         </div>
         <span className="team-member-info">
           <span className="team-member-name">{member.name}</span>
@@ -78,7 +82,7 @@ export function TeamMemberModal({
       >
         <div className="team-modal-layout">
           <div className="team-modal-sidebar">
-            <Image width={470} height={400} src={member.image} alt="" className="team-modal-photo" />
+            {member.imageUrl && <Image width={470} height={400} src={member.imageUrl} alt="" className="team-modal-photo" />}
             {(member.email ||
               member.phone ||
               member.location ||

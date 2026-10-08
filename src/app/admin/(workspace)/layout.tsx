@@ -9,7 +9,7 @@ import { settingsService } from "@/Services/settings.service";
 import { userService } from "@/Services/user.service";
 
 export const metadata: Metadata = {
-  title: "ICAADA Admin",
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 

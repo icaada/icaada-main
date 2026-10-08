@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ICAADA",
+  title: { default: "ICAADA", template: "%s · ICAADA" },
   description:
     "The Initiative for Community Action Against Drug Abuse (ICAADA) is a community-focused platform dedicated to strengthening collective action against drug abuse and its associated health, social, economic and security consequences across Northern Nigeria.",
 };

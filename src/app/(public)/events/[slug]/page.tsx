@@ -1,27 +1,46 @@
-"use client";
-
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ArrowRight, MapPin } from "lucide-react";
-import { useParams } from "next/navigation";
-import {
-  events,
-  frameworkPrinciples,
-  photos,
-  stakeholderVoices,
-} from "@/data/content";
+import { frameworkPrinciples, photos } from "@/data/content";
 import { ButtonLink, Eyebrow, PageHero } from "@/components/site";
 import { VoiceCarousel } from "@/components/credibility";
 import Link from "next/link";
 import Image from "next/image";
+import { eventDateText, phaseLabel } from "@/lib/display";
+import { eventService } from "@/Services/event.service";
+import { voiceService } from "@/Services/voice.service";
 
-export default function EventDetail() {
-  const { slug } = useParams<{ slug: string }>();
-  const event = events.find((item) => item.slug === slug) ?? events[0];
-  const isSummit = event.status === "Envisioned";
+export const revalidate = 3600;
+
+type Props = { params: Promise<{ slug: string }> };
+
+/** Pre-render every published event; new slugs render on first request. */
+export async function generateStaticParams() {
+  return (await eventService.listPublished()).map((event) => ({ slug: event.slug }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const event = await eventService.getPublishedBySlug((await params).slug);
+  if (!event) return { title: "Event not found" };
+  return {
+    title: event.title,
+    description: event.description,
+    openGraph: event.imageUrl ? { images: [event.imageUrl] } : undefined,
+  };
+}
+
+export default async function EventDetail({ params }: Props) {
+  const event = await eventService.getPublishedBySlug((await params).slug);
+  if (!event) notFound();
+  const voices = (await voiceService.listPublished()).filter((voice) => voice.eventId === event.id);
+  const isSummit = event.phase === "ENVISIONED";
+  const status = phaseLabel[event.phase];
+  const paragraphs = event.body?.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean) ?? [];
 
   return (
     <>
       <PageHero
-        eyebrow={`${event.status} ${event.type} / ${event.dateLabel}`}
+        eyebrow={`${status} ${event.type} / ${eventDateText(event)}`}
         title={event.title}
         description={event.description}
       />
@@ -29,18 +48,22 @@ export default function EventDetail() {
         <div className="container-wide detail-layout">
           <div className="detail-main">
             <Image
-              src={isSummit ? photos.meeting : photos.workshop}
+              src={event.imageUrl ?? (isSummit ? photos.meeting : photos.workshop)}
               alt="People gathered around a table during a facilitated conversation"
               width={850}
               height={460}
             />
             <div className="prose-copy">
               <h2 className="display">
-                {isSummit
-                  ? "A launchpad for sustained community action."
-                  : "An illustrative event experience."}
+                {paragraphs.length
+                  ? "About this event."
+                  : isSummit
+                    ? "A launchpad for sustained community action."
+                    : "An illustrative event experience."}
               </h2>
-              {isSummit ? (
+              {paragraphs.length ? (
+                paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
+              ) : isSummit ? (
                 <>
                   <p>
                     The Summit will provide an opportunity for policy dialogue,
@@ -71,7 +94,7 @@ export default function EventDetail() {
                 </p>
               )}
               <ButtonLink href="/contact" testId="link-event-detail-interest">
-                {event.status === "Past"
+                {event.phase === "PAST"
                   ? "Ask about related learning"
                   : "Register your interest"}
               </ButtonLink>
@@ -81,13 +104,13 @@ export default function EventDetail() {
             <h3>Event status</h3>
             <ul className="aside-list">
               <li>
-                <strong>{event.status}</strong>
+                <strong>{status}</strong>
               </li>
-              <li>{event.contentStatus}</li>
+              {event.contentNote && <li>{event.contentNote}</li>}
               <li>
                 <MapPin size={15} /> {event.location}
               </li>
-              <li>{event.dateLabel}</li>
+              <li>{eventDateText(event)}</li>
             </ul>
             <Link
               href="/events"
@@ -129,13 +152,7 @@ export default function EventDetail() {
           </div>
         </div>
       </section>
-      {isSummit && (
-        <VoiceCarousel
-          voices={stakeholderVoices.filter(
-            (voice) => voice.eventSlug === event.slug,
-          )}
-        />
-      )}
+      {voices.length > 0 && <VoiceCarousel voices={voices} />}
       <section className="section-pad">
         <div className="container-wide">
           <div className="section-heading">

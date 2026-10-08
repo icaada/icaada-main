@@ -1,3 +1,10 @@
+// Static site copy used directly by the public pages: photos, hero slides,
+// the action model, values, principles and other text with no admin module.
+// The module collections below (strategicPriorities, partnershipGroups, events,
+// team, news, mediaItems, stakeholderVoices, leaderVideos, teamMembers) are no
+// longer read by pages. They are the source data for prisma/seed.ts; the live
+// site reads those modules from the database via src/Services.
+
 export const photos = {
   hero: "https://res.cloudinary.com/dcvyjmflf/image/upload/v1788230614/WhatsApp_Image_2026-08-31_at_11.48.32.jpg",
   youth:

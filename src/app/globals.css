@@ -5098,3 +5098,65 @@ button.admin-shell-popover-link {
   justify-content: center;
   padding: 1rem 0;
 }
+
+/* ===== Public forms wired to the API ===== */
+.form-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.field-error {
+  color: hsl(var(--accent));
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.field [aria-invalid="true"] {
+  border-color: hsl(var(--accent));
+}
+.form-status-error {
+  grid-column: 1 / -1;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid hsl(var(--accent));
+  background: hsl(349 100% 39% / 0.06);
+  font-size: 0.82rem;
+}
+.contact-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+fieldset.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.field-legend {
+  margin-bottom: 0.42rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: hsl(var(--muted-foreground));
+}
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.5rem;
+}
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.checkbox-option:has(input:checked) {
+  border-color: hsl(var(--accent));
+}
+.checkbox-option input {
+  width: auto;
+  accent-color: hsl(var(--accent));
+}
