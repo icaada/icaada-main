@@ -7,9 +7,9 @@ import { getEnv } from "@/lib/env";
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function createClient() {
-  const { DATABASE_URL, NODE_ENV } = getEnv();
+  const { DATABASE_URL, DATABASE_POOL_MAX, NODE_ENV } = getEnv();
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: DATABASE_URL }),
+    adapter: new PrismaPg({ connectionString: DATABASE_URL, ...(DATABASE_POOL_MAX ? { max: DATABASE_POOL_MAX } : {}) }),
     log: NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
 }

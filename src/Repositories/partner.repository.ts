@@ -1,7 +1,7 @@
 import type { Partner } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import type { PartnerCreateInput, PartnerUpdateInput } from "@/Schemas/partner.schema";
-import { ci, defined, withPrismaErrors, type ContentListParams, type ContentRepository, type ContentSystemFields } from "@/Repositories/repository-utils";
+import { CONTENT_STATUSES, ci, defined, toStatusCounts, withPrismaErrors, type ContentListParams, type ContentRepository, type ContentSystemFields } from "@/Repositories/repository-utils";
 
 export type PartnerRecord = Partner;
 type CreateFields = Omit<PartnerCreateInput, "slug" | "sortOrder">;
@@ -25,6 +25,14 @@ export const partnerRepository: ContentRepository<Partner, CreateFields, UpdateF
       where: { status: "PUBLISHED" },
       orderBy: [{ sortOrder: "asc" }, { publishedAt: "desc" }],
     });
+  },
+
+  async statusCounts() {
+    // Independent reads: no transaction needed, so they never wait for a dedicated connection.
+    const counts = await Promise.all(
+      CONTENT_STATUSES.map((status) => getPrisma().partner.count({ where: { status } })),
+    );
+    return toStatusCounts(counts);
   },
 
   findById(id) {

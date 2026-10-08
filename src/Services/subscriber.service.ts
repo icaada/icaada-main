@@ -3,7 +3,7 @@ import { notifier } from "@/lib/notifier";
 import { enforceRateLimit, rateLimits } from "@/lib/rate-limit";
 import { subscriberRepository, type SubscriberRecord } from "@/Repositories/subscriber.repository";
 import { HONEYPOT_FIELD } from "@/Schemas/common.schema";
-import type { SubscribeInput, SubscriberListQuery, SubscriberUpdateInput } from "@/Schemas/newsletter.schema";
+import type { SubscribeInput, SubscriberCreateInput, SubscriberListQuery, SubscriberUpdateInput } from "@/Schemas/newsletter.schema";
 import { activityService } from "@/Services/activity.service";
 import { iso, pageArgs, pageMeta, type Actor } from "@/Services/service-utils";
 
@@ -55,6 +55,16 @@ export const subscriberService = {
       subscriberRepository.countByStatus("SUBSCRIBED"),
     ]);
     return { items: items.map(toDto), meta: { ...pageMeta(query, total), subscribed } };
+  },
+
+  /** Admin-added subscriber (e.g. someone who signed up on paper). */
+  async create(actor: Actor, input: SubscriberCreateInput) {
+    if (await subscriberRepository.findByEmail(input.email)) {
+      throw ApiError.conflict("This email is already on the list.", { email: ["Already subscribed."] });
+    }
+    const subscriber = await subscriberRepository.create(input);
+    await activityService.record(actor, "created", "subscriber", subscriber.id, `Added subscriber ${subscriber.email}`);
+    return toDto(subscriber);
   },
 
   async update(actor: Actor, id: string, input: SubscriberUpdateInput) {

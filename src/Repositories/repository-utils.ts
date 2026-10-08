@@ -37,12 +37,20 @@ export interface ContentSystemFields {
 export interface ContentRepository<TRecord, TCreate, TUpdate> {
   list(params: ContentListParams): Promise<Paged<TRecord>>;
   listPublished(): Promise<TRecord[]>;
+  statusCounts(): Promise<Record<ContentStatus, number>>;
   findById(id: string): Promise<TRecord | null>;
   findPublishedBySlug(slug: string): Promise<TRecord | null>;
   slugExists(slug: string, excludeId?: string): Promise<boolean>;
   create(data: TCreate & ContentSystemFields): Promise<TRecord>;
   update(id: string, data: Partial<TUpdate & ContentSystemFields>): Promise<TRecord>;
   delete(id: string): Promise<TRecord>;
+}
+
+export const CONTENT_STATUSES = ["DRAFT", "REVIEW", "PUBLISHED", "ARCHIVED"] as const satisfies readonly ContentStatus[];
+
+/** Zips per-status counts (in CONTENT_STATUSES order) into a map. */
+export function toStatusCounts(counts: number[]): Record<ContentStatus, number> {
+  return Object.fromEntries(CONTENT_STATUSES.map((status, i) => [status, counts[i] ?? 0])) as Record<ContentStatus, number>;
 }
 
 /** Strips undefined keys so partial updates never overwrite with undefined. */

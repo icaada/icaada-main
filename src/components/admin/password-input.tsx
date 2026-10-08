@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, forwardRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 

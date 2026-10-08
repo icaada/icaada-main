@@ -60,6 +60,7 @@ export interface ContentService<TCreate, TUpdate, TDto> {
   listPublished(): Promise<TDto[]>;
   getPublishedBySlug(slug: string): Promise<TDto | null>;
   list(query: ContentListQuery): Promise<{ items: TDto[]; meta: PageMeta }>;
+  statusCounts(): Promise<Record<ContentStatus, number>>;
   get(id: string): Promise<TDto>;
   create(actor: Actor, input: TCreate): Promise<TDto>;
   update(actor: Actor, id: string, input: TUpdate): Promise<TDto>;
@@ -119,6 +120,8 @@ export function createContentService<TRecord extends ContentRecordBase, TCreate 
       return { items: items.map(toDto), meta: pageMeta(query, total) };
     },
 
+    statusCounts: () => repository.statusCounts(),
+
     async get(id: string): Promise<TDto> {
       return toDto(await getRecord(id));
     },
@@ -146,7 +149,16 @@ export function createContentService<TRecord extends ContentRecordBase, TCreate 
       // Validate the merged result before writing.
       const merged = { ...existing, ...stripUndefined(fields), ...(nextSlug ? { slug: nextSlug } : {}) } as TRecord;
       config.validate?.(merged);
-      if (existing.status === "PUBLISHED") assertPublishable(merged);
+      if (existing.status === "PUBLISHED") {
+        // Block edits that would break a live record, but don't lock records
+        // that were already published with gaps (e.g. imported content):
+        // only problems introduced by this edit count.
+        const before = new Set(config.publishProblems?.(existing) ?? []);
+        const introduced = (config.publishProblems?.(merged) ?? []).filter((p) => !before.has(p));
+        if (introduced.length) {
+          throw ApiError.validation(`This change would leave the published ${label.toLowerCase()} incomplete.`, { status: introduced });
+        }
+      }
 
       const patch = {
         ...fields,

@@ -1,5 +1,7 @@
+'use client';
+
 import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useRouter } from 'next/navigation';
 import { PasswordInput } from './password-input';
 
 type FieldErrors = {
@@ -10,7 +12,7 @@ type FieldErrors = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function LoginForm() {
-  const [, setLocation] = useLocation();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -52,11 +54,12 @@ export function LoginForm() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, remember: rememberMe }),
       });
 
       if (response.ok) {
-        setLocation('/admin');
+        router.replace('/admin');
+        router.refresh();
       } else {
         const body = await response.json().catch(() => null);
         setAuthError(body?.error?.message || 'Invalid email or password.');

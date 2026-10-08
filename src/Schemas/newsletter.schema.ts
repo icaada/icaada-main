@@ -15,6 +15,13 @@ export const subscriberListQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().max(200).optional(),
   status: subscriberStatusSchema.optional(),
 });
+export const subscriberCreateSchema = z.object({
+  email: emailSchema,
+  name: optionalText(120),
+  status: subscriberStatusSchema.default("SUBSCRIBED"),
+});
+export type SubscriberCreateInput = z.infer<typeof subscriberCreateSchema>;
+
 export const subscriberUpdateSchema = z.object({
   status: subscriberStatusSchema.optional(),
   name: optionalText(120).optional(),

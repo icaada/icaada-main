@@ -4,6 +4,8 @@ import { emailSchema } from "@/Schemas/common.schema";
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Enter your password.").max(200),
+  /** false → browser-session cookie; true/omitted → persistent for the session lifetime. */
+  remember: z.boolean().optional(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 

@@ -35,6 +35,10 @@ export const volunteerRepository = {
     return { items, total };
   },
 
+  countByStatus(status: VolunteerStatus) {
+    return getPrisma().volunteerApplication.count({ where: { status } });
+  },
+
   findById(id: string) {
     return getPrisma().volunteerApplication.findUnique({ where: { id } });
   },

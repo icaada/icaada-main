@@ -12,8 +12,8 @@ This document describes how the ICAADA web application is structured, how data a
 ┌────────────────────────────────────────────────────────────────────────────┐
 │  Next.js 16 App Router  (React 19 · React Compiler · TS strict)            │
 │                                                                            │
-│  Public website (public)        Admin workspace /admin (UI in migration)   │
-│  pages still read content.ts    calls /api/admin/** (login already wired)  │
+│  Public website (public)        Admin workspace /admin (session-guarded)   │
+│  pages still read content.ts    client screens call /api/admin/**          │
 │        │  (can call services            │                                │
 │        │   directly, see §5.6)           ▼                                │
 │        │                  ┌──────────────────────────────┐                 │
@@ -34,7 +34,7 @@ This document describes how the ICAADA web application is structured, how data a
 - A **layered backend** (Route Handler → Guard → Service → Repository → Prisma → PostgreSQL) owns all content, inbox, newsletter, users and settings data. It mirrors the Academy LMS architecture. See §5.
 - `src/data/content.ts` is still what the public pages render. The seed copies it into the database as PUBLISHED records. Swapping pages over to the services is the next step (§5.6).
 - Media lives on **Cloudinary**. The database stores only URLs and public IDs, and browsers upload directly with a server-signed signature.
-- The admin UI is still being ported from a Vite + wouter prototype (§6). Its login form already calls the real API.
+- The admin workspace (§6) is fully wired to the API: a server layout checks the session, and the client screens read and write through `/api/admin/**`.
 
 ---
 
@@ -70,15 +70,14 @@ icaada-main/
     │   │   ├── auth/          login · logout · me
     │   │   ├── public/        published content reads + contact/volunteer/newsletter forms
     │   │   └── admin/         guarded CRUD, inbox, newsletter, users, settings, uploads
-    │   └── admin/             Admin screens (see §6, not routed yet)
+    │   └── admin/             (auth)/login and (workspace)/… screens (see §6)
     ├── Services/              Business rules, DTOs, activity logging (*.service.ts)
     ├── Repositories/          The ONLY Prisma users (*.repository.ts)
     ├── Schemas/               Zod request schemas + domain enums (*.schema.ts)
     ├── generated/prisma/      Generated Prisma client. Git-ignored, never hand-edited
     ├── components/            (unchanged; see §4, §6)
     ├── data/
-    │   ├── content.ts         Static site content (pages still read it; seed source)
-    │   └── admin/mock.ts      Admin UI demo types/records (superseded by the API)
+    │   └── content.ts         Static site content (pages still read it; seed source)
     ├── hooks/                 use-mobile, use-toast (shadcn)
     ├── lib/
     │   ├── env.ts             Zod-validated env (getEnv)
@@ -104,7 +103,8 @@ icaada-main/
 |---|---|
 | `app/layout.tsx` | Root layout. Sets `<html lang="en">`, global metadata (title "ICAADA" plus mission description) and imports `globals.css`. |
 | `app/(public)/` | A **route group**, so `(public)` does not appear in URLs. Its `layout.tsx` wraps every public page in the fixed header, the nav and `<Footer/>`. Keeping the group separate lets `/admin` use a completely different chrome. |
-| `app/admin/` | The admin workspace. It currently has **no `page.tsx`/`layout.tsx`**: the old placeholder routes were deleted and the new screens are plain modules that have not been wired up yet. |
+| `app/admin/(auth)/` | `/admin/login`. Redirects to `/admin` when a session already exists. |
+| `app/admin/(workspace)/` | Every other `/admin/**` screen. Its server `layout.tsx` checks the session (redirecting to `/admin/login`), loads the user, settings and header counts, and mounts the admin shell once for all screens. |
 
 ### Public routes
 
@@ -202,8 +202,9 @@ All responses use one of two shapes:
 | Media | `POST /api/admin/media/sign-upload` `{ resourceType, folder }` → Cloudinary signature | EDITOR+ |
 | Inbox | `GET /api/admin/messages` · `GET/PATCH/DELETE /api/admin/messages/[id]` (status, `replyDraft`) | EDITOR+ |
 | Volunteers | `GET /api/admin/volunteers` · `GET/PATCH/DELETE /api/admin/volunteers/[id]` | EDITOR+ |
-| Newsletter | `GET /api/admin/subscribers` · `PATCH/DELETE /api/admin/subscribers/[id]` · `GET/POST /api/admin/newsletter` · `GET/PATCH/DELETE /api/admin/newsletter/[id]` | EDITOR+ |
+| Newsletter | `GET/POST /api/admin/subscribers` · `PATCH/DELETE /api/admin/subscribers/[id]` · `GET/POST /api/admin/newsletter` · `GET/PATCH/DELETE /api/admin/newsletter/[id]` | EDITOR+ |
 | Activity | `GET /api/admin/activity` (`?entityType=&actorId=`) | EDITOR+ |
+| Summary | `GET /api/admin/summary` (per-module status counts, review queue, unread messages, new volunteers, active subscribers) | EDITOR+ |
 | Settings | `GET /api/admin/settings` (EDITOR+) · `PATCH /api/admin/settings` (ADMIN) | mixed |
 | Profile | `GET/PATCH /api/admin/profile` · `POST /api/admin/profile/password` | any user |
 | Users | `GET/POST /api/admin/users` · `GET/PATCH/DELETE /api/admin/users/[id]` | ADMIN |
@@ -281,42 +282,48 @@ DTO field names differ slightly from `content.ts` (for example `imageUrl` instea
 - **Env:** `src/lib/env.ts` validates formats with Zod, not just presence: Postgres URLs, a secret of at least 32 characters, the cloud-name pattern, a numeric API key.
 - **Rate limiting:** `src/lib/rate-limit.ts` keeps counters in memory per instance. Use Redis before scaling out.
 - **Notifications:** `src/lib/notifier.ts` defines the interface. The current implementation only logs; plug in email later.
-- **Admin mock data:** `src/data/admin/mock.ts` is now only demo data for the unported screens. The real shapes are the DTOs exported from each service.
+- **Pool size:** `DATABASE_POOL_MAX` (optional) caps connections per instance. Set it to 1 when using `prisma dev`, whose PGlite server accepts only one connection.
 
 ---
 
-## 6. Admin workspace (in migration)
-
-The admin UI port from the Vite + wouter prototype is in progress:
+## 6. Admin workspace
 
 ```
-components/admin/
-  admin-layout.tsx    Sidebar shell (Dashboard · Content · Organisation · Engagement · Settings)
-  auth-layout.tsx     Split-screen login layout (photo + form)
-  login-form.tsx      Validated login → POST /api/auth/login (sets session cookie) → redirect
-  password-input.tsx  Show/hide password field
-  admin-parts.tsx     PageHeading, StatusBadge, Toolbar, EmptyState, Confirm/Form/DetailDialog
-  fields-form.tsx     Schema-driven form (text|textarea|select|date|url|email|asset)
-  module-configs.ts   One ModuleConfig per ModuleKey: columns, fields, copy
-  module-manager.tsx  Generic list/search/filter/CRUD screen driven by a ModuleConfig
 app/admin/
-  module-page.tsx     createModulePage(key) → AdminTeam, AdminEvents, … AdminPartners
-  dashboard.tsx  messages.tsx  newsletter.tsx  settings.tsx  login.tsx
+  (auth)/login/page.tsx        Server page: redirects signed-in users; renders AuthLayout + LoginForm
+  (workspace)/layout.tsx       Server gate: getCurrentActor() or redirect('/admin/login');
+                               loads me, workspace settings, summary → <AdminProvider><AdminLayout>
+  (workspace)/page.tsx         Dashboard (summary counts + recent activity)
+  (workspace)/{team,events,media,voices,news,programs,partners}/page.tsx
+                               createModulePage(key) → <ModuleManager config={moduleConfigs[key]}>
+  (workspace)/messages · volunteers · newsletter · settings
+components/admin/
+  admin-layout.tsx    Sidebar + header shell (client); logout calls POST /api/auth/logout
+  auth-layout.tsx     Split-screen login layout
+  login-form.tsx      POST /api/auth/login (remember me → persistent vs browser-session cookie)
+  admin-parts.tsx     PageHeading, StatusBadge, Toolbar, EmptyState, ListStatus, Confirm/Form/DetailDialog
+  fields-form.tsx     Schema-driven form; async submit maps API field errors inline; asset fields upload to Cloudinary
+  module-configs.ts   One ModuleConfig per module (fields named exactly as the API schemas)
+  module-manager.tsx  Generic list/search/filter/CRUD/status screen for any ModuleConfig
+  module-page.tsx     createModulePage(key)
+lib/admin/
+  api-client.ts       fetch wrapper for /api/** → { data, meta } or AdminApiError (401 → /admin/login)
+  admin-store.tsx     AdminProvider/useAdmin: me, workspace, summary (header badges), toasts
+  use-admin-list.ts   Server-side list: debounced search, status filter, "load more" pagination
+  field-values.ts     DTO ⇄ form-string conversion (lists, booleans, dates, null-clearing)
+  cloudinary-upload.ts  Signed direct upload (sign via API, POST file to Cloudinary)
+  format.ts           Relative dates, initials
 ```
 
-**Key design decision: config-driven CRUD.** The seven content modules do not each get a hand-written screen. A single `ModuleManager` renders any module from a declarative `ModuleConfig` (list columns, form fields, title key, preview key). Adding a module means adding a seed collection and a config entry, with no new UI code.
+**Config-driven CRUD.** The seven content modules share one screen. `ModuleManager` renders any module from a `ModuleConfig` (list columns, form fields, title key, preview key). Field `kind`s map form strings to API types: `list` (comma-separated) and `lines` (one per line) become `string[]`, `boolean` becomes `true`/`false`, `date` becomes an ISO date, an empty optional field becomes `null`, and `asset` holds a URL plus a `publicIdField`.
+
+**Data flow.** Screens never hold the whole dataset. Each list asks the API for one page at a time, filtered and searched server-side. Mutations update the affected row in place, or reload the list, and then refresh the header counts (`GET /api/admin/summary`). Server validation errors come back with field paths, and `FieldsForm` shows them under the matching field. Publish-rule failures appear as a toast that includes the server's reasons.
+
+**Auth.** The workspace layout checks the session on every full page load. Client-side navigation relies on the API instead: every `/api/admin/**` call is guarded, and a 401 sends the browser to `/admin/login`. Editors see the workspace settings read-only; only admins can change them.
 
 **Isolation decision.** Admin styles live under `.admin-*` and `.adm-*` in `globals.css` and use their own `--admin-*` variables, so admin changes cannot leak into the public site's look.
 
-**Current blockers** (`tsc --noEmit` reports errors only in admin files; the public site type-checks clean):
-
-1. `wouter` (`Link`, `useLocation`) is imported by `admin-layout`, `auth-layout`, `login-form` and `module-manager`, but it is not installed. Replace it with `next/link` and `useRouter`/`usePathname` from `next/navigation`.
-2. `@/lib/admin/demo-store` (`useDemo`) is missing. Rather than building an in-memory store, back it with the API: each `useDemo()` call maps onto a `/api/admin/**` endpoint (§5.3). The response DTOs already match the screens' field names, with enum values upper-cased (`PUBLISHED` instead of `published`).
-3. The screens are not routed. They need `app/admin/layout.tsx` (client, wrapping `AdminLayout`), `app/admin/page.tsx` → dashboard, `app/admin/login/page.tsx`, and `app/admin/[module]/page.tsx` or one folder per module.
-4. Several `implicit any` errors cascade from the missing store types.
-5. The **pages** have no route guard yet. (The API is fully guarded.) When the screens are routed, check the session in a server `app/admin/layout.tsx` with `getCurrentActor()` and redirect to `/admin/login`. A `proxy.ts` (Next 16's renamed middleware) can also do a cheap cookie-presence redirect, but it must not replace the server-side check.
-
-Because `tsconfig.json` includes `**/*.tsx`, **`next build` will fail type-checking until these are resolved or the files are excluded.**
+**Not built yet:** a users screen (the `/api/admin/users` endpoints exist), "Forgot password" (the link is inert; admins can reset a password via `PATCH /api/admin/users/[id]`), and choosing an event for a voice (`eventId` is API-only for now).
 
 ---
 
@@ -369,7 +376,8 @@ pnpm db:studio            # browse data
 
 | Priority | Item |
 |---|---|
-| **High** | Finish the admin port: remove `wouter`, replace `demo-store` with calls to `/api/admin/**`, route the screens behind a session check. `next build` is blocked until then (all remaining type errors are in the admin-port files) |
+| Medium | Admin users screen on top of `/api/admin/users`; a password-reset flow (needs an email provider) |
+| Medium | Sessions are stateless JWTs: logout clears the cookie, but a copied token stays valid until it expires (7 days). If that matters, add a token version on `User` and bump it on logout and password change |
 | **High** | Swap public pages from `content.ts` to the services and add `notFound()` (§5.6). Then wire the contact, volunteer and newsletter forms to `/api/public/**` |
 | **High** | Fix the footer copy (it says "International Centre for Advocacy"). See BRAND.md |
 | Medium | Convert pages to Server Components, add per-page metadata, `generateStaticParams` and `notFound()` for slugs |

@@ -18,6 +18,8 @@ const envSchema = z.object({
     .default("development"),
   DATABASE_URL: postgresUrl,
   DIRECT_URL: postgresUrl,
+  /** Optional max connections per server instance (pg default: 10). Lower it on serverless hosts. */
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).optional(),
   SESSION_SECRET: z
     .string()
     .min(32, "must be at least 32 characters (try: openssl rand -base64 48)"),

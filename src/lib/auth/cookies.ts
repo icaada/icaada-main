@@ -9,13 +9,15 @@ export async function readSessionCookie(): Promise<string | undefined> {
 }
 
 /** Route Handlers / Server Functions only (cookies cannot be set while rendering). */
-export async function setSessionCookie(token: string): Promise<void> {
+export async function setSessionCookie(token: string, { persistent = true } = {}): Promise<void> {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: isProduction(),
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    // Without maxAge the browser drops the cookie when it closes; the JWT
+    // itself still expires after SESSION_TTL_SECONDS either way.
+    ...(persistent ? { maxAge: SESSION_TTL_SECONDS } : {}),
   });
 }
 

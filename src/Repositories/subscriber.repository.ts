@@ -23,6 +23,14 @@ export const subscriberRepository = {
     });
   },
 
+  create(data: { email: string; name: string | null; status: SubscriberStatus }) {
+    return withPrismaErrors(() =>
+      getPrisma().subscriber.create({
+        data: { ...data, ...(data.status === "UNSUBSCRIBED" ? { unsubscribedAt: new Date() } : {}) },
+      }),
+    );
+  },
+
   async list({ search, status, skip, take }: ListParams & { status?: SubscriberStatus }): Promise<Paged<Subscriber>> {
     const where: Prisma.SubscriberWhereInput = {
       ...(status ? { status } : {}),

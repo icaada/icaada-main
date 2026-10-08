@@ -1,7 +1,7 @@
 import type { Event } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import type { EventCreateInput, EventUpdateInput } from "@/Schemas/event.schema";
-import { ci, defined, withPrismaErrors, type ContentListParams, type ContentRepository, type ContentSystemFields } from "@/Repositories/repository-utils";
+import { CONTENT_STATUSES, ci, defined, toStatusCounts, withPrismaErrors, type ContentListParams, type ContentRepository, type ContentSystemFields } from "@/Repositories/repository-utils";
 
 export type EventRecord = Event;
 type CreateFields = Omit<EventCreateInput, "slug" | "sortOrder">;
@@ -25,6 +25,14 @@ export const eventRepository: ContentRepository<Event, CreateFields, UpdateField
       where: { status: "PUBLISHED" },
       orderBy: [{ sortOrder: "asc" }, { startsAt: "asc" }, { publishedAt: "desc" }],
     });
+  },
+
+  async statusCounts() {
+    // Independent reads: no transaction needed, so they never wait for a dedicated connection.
+    const counts = await Promise.all(
+      CONTENT_STATUSES.map((status) => getPrisma().event.count({ where: { status } })),
+    );
+    return toStatusCounts(counts);
   },
 
   findById(id) {

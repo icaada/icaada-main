@@ -1,21 +1,13 @@
+'use client';
+
 import { type ReactNode } from 'react';
-import { Info, SearchX } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { FieldsForm, type FieldConfig } from '@/components/admin/fields-form';
-import type { Status } from '@/data/admin/mock';
-
-export function DemoNotice() {
-  return (
-    <p className="adm-notice" data-testid="text-demo-notice">
-      <Info size={15} aria-hidden="true" />
-      <span><strong>Demo workspace.</strong> Changes live in this browser tab only and reset when you refresh. Nothing is saved or sent.</span>
-    </p>
-  );
-}
 
 export function PageHeading({ kicker, title, lede, actions }: { kicker: string; title: string; lede: string; actions?: ReactNode }) {
   return (
@@ -30,12 +22,23 @@ export function PageHeading({ kicker, title, lede, actions }: { kicker: string; 
   );
 }
 
-const statusLabels: Record<string, string> = {
-  draft: 'Draft', review: 'In review', published: 'Published', archived: 'Archived',
-  unread: 'Unread', read: 'Read', subscribed: 'Subscribed', unsubscribed: 'Unsubscribed',
+// API statuses are upper-case; badge CSS classes are the lower-case names.
+// Inbox NEW renders as "Unread".
+const statusStyles: Record<string, { className: string; label: string }> = {
+  draft: { className: 'draft', label: 'Draft' },
+  review: { className: 'review', label: 'In review' },
+  published: { className: 'published', label: 'Published' },
+  archived: { className: 'archived', label: 'Archived' },
+  new: { className: 'unread', label: 'Unread' },
+  unread: { className: 'unread', label: 'Unread' },
+  read: { className: 'read', label: 'Read' },
+  contacted: { className: 'read', label: 'Contacted' },
+  subscribed: { className: 'subscribed', label: 'Subscribed' },
+  unsubscribed: { className: 'unsubscribed', label: 'Unsubscribed' },
 };
-export function StatusBadge({ status, testId }: { status: Status | string; testId?: string }) {
-  return <span className={`adm-badge is-${status}`} data-testid={testId}>{statusLabels[status] ?? status}</span>;
+export function StatusBadge({ status, label, testId }: { status: string; label?: string; testId?: string }) {
+  const style = statusStyles[status.toLowerCase()] ?? { className: status.toLowerCase(), label: status };
+  return <span className={`adm-badge is-${style.className}`} data-testid={testId}>{label ?? style.label}</span>;
 }
 
 export function EmptyState({ title, text, onReset, resetLabel = 'Reset filters', action }: { title: string; text: string; onReset?: () => void; resetLabel?: string; action?: ReactNode }) {
@@ -52,6 +55,28 @@ export function EmptyState({ title, text, onReset, resetLabel = 'Reset filters',
   );
 }
 
+/** Loading / error / "load more" footer shared by the list screens. */
+export function ListStatus({ loading, error, hasMore, onRetry, onLoadMore }: {
+  loading: boolean; error: string | null; hasMore: boolean; onRetry: () => void; onLoadMore: () => void;
+}) {
+  if (error) {
+    return (
+      <p className="adm-form-error" role="alert" data-testid="text-list-error">
+        {error} <button type="button" className="adm-btn is-small" onClick={onRetry} data-testid="button-retry">Retry</button>
+      </p>
+    );
+  }
+  if (loading) return <p className="adm-count" role="status" data-testid="text-loading">Loading…</p>;
+  if (hasMore) {
+    return (
+      <div className="adm-load-more">
+        <button type="button" className="adm-btn" onClick={onLoadMore} data-testid="button-load-more">Load more</button>
+      </div>
+    );
+  }
+  return null;
+}
+
 export function Toolbar({ search, onSearch, status, onStatus, options, searchLabel, extra }: {
   search: string; onSearch: (v: string) => void; status: string; onStatus: (v: string) => void;
   options: { value: string; label: string }[]; searchLabel: string; extra?: ReactNode;
@@ -64,7 +89,7 @@ export function Toolbar({ search, onSearch, status, onStatus, options, searchLab
       </label>
       <div className="adm-chips" role="group" aria-label="Filter by status">
         {options.map((o) => (
-          <button key={o.value} type="button" className={`adm-chip${status === o.value ? ' is-active' : ''}`} aria-pressed={status === o.value} onClick={() => onStatus(o.value)} data-testid={`filter-status-${o.value}`}>{o.label}</button>
+          <button key={o.value} type="button" className={`adm-chip${status === o.value ? ' is-active' : ''}`} aria-pressed={status === o.value} onClick={() => onStatus(o.value)} data-testid={`filter-status-${o.value.toLowerCase()}`}>{o.label}</button>
         ))}
       </div>
       {extra}
@@ -93,7 +118,7 @@ export function ConfirmDialog({ open, title, description, confirmLabel = 'Delete
 
 export function FormDialog({ open, title, description, fields, defaults, submitLabel, testPrefix, onSubmit, onClose }: {
   open: boolean; title: string; description: string; fields: FieldConfig[]; defaults: Record<string, string>;
-  submitLabel: string; testPrefix: string; onSubmit: (v: Record<string, string>) => void; onClose: () => void;
+  submitLabel: string; testPrefix: string; onSubmit: (v: Record<string, string>) => void | Promise<void>; onClose: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
