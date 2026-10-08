@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { mockAdminLogin } from '@/lib/mock-auth';
 import { PasswordInput } from './password-input';
 
 type FieldErrors = {
@@ -49,13 +48,21 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = await mockAdminLogin(email.trim(), password);
+      // Sets the HTTP-only icaada_session cookie on success.
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-      if (result.success) {
+      if (response.ok) {
         setLocation('/admin');
       } else {
-        setAuthError(result.message || 'Invalid email or password.');
+        const body = await response.json().catch(() => null);
+        setAuthError(body?.error?.message || 'Invalid email or password.');
       }
+    } catch {
+      setAuthError('Could not reach the server. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

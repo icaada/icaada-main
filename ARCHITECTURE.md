@@ -9,26 +9,32 @@ This document describes how the ICAADA web application is structured, how data a
 ## 1. System overview
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  Next.js 16 App Router  (React 19 · React Compiler · TS strict)  │
-│                                                                  │
-│  ┌─────────────────────────────┐   ┌───────────────────────────┐ │
-│  │  Public website  (public)   │   │  Admin workspace  /admin  │ │
-│  │  marketing + content pages  │   │  demo CMS (in migration)  │ │
-│  └──────────────┬──────────────┘   └─────────────┬─────────────┘ │
-│                 │                                │               │
-│      src/data/content.ts               src/data/admin/mock.ts    │
-│      (static typed content)            (seed data, in-memory)    │
-│                 │                                │               │
-│                 ▼                                ▼               │
-│        Cloudinary images              src/lib/mock-auth.ts       │
-│        (next/image remote)            (fake login, no backend)   │
-└──────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Next.js 16 App Router  (React 19 · React Compiler · TS strict)            │
+│                                                                            │
+│  Public website (public)        Admin workspace /admin (UI in migration)   │
+│  pages still read content.ts    calls /api/admin/** (login already wired)  │
+│        │  (can call services            │                                │
+│        │   directly, see §5.6)           ▼                                │
+│        │                  ┌──────────────────────────────┐                 │
+│        │                  │ Route Handlers  src/app/api/ │  Zod validation │
+│        │                  │   ▼  auth guard (cookie/JWT) │                 │
+│        └────────────────▶ │ Services  src/Services/      │  rules, DTOs,   │
+│                           │   ▼                          │  activity log,  │
+│                           │ Repositories src/Repositories│  revalidation   │
+│                           │   ▼                          │                 │
+│                           │ Prisma 7 (adapter-pg)        │                 │
+│                           └──────────────┬───────────────┘                 │
+└──────────────────────────────────────────┼─────────────────────────────────┘
+                                           ▼
+                                      PostgreSQL          Cloudinary (media;
+                                                          signed direct upload)
 ```
 
-- There is **no backend, database, API route or environment variable** yet. All content is static TypeScript.
-- Media is hosted on **Cloudinary** and optimised by `next/image`.
-- The public site is the production surface. The admin area is a **front-end demo** being ported into Next.js from an earlier Vite + wouter prototype (see §6).
+- A **layered backend** (Route Handler → Guard → Service → Repository → Prisma → PostgreSQL) owns all content, inbox, newsletter, users and settings data. It mirrors the Academy LMS architecture. See §5.
+- `src/data/content.ts` is still what the public pages render. The seed copies it into the database as PUBLISHED records. Swapping pages over to the services is the next step (§5.6).
+- Media lives on **Cloudinary**. The database stores only URLs and public IDs, and browsers upload directly with a server-signed signature.
+- The admin UI is still being ported from a Vite + wouter prototype (§6). Its login form already calls the real API.
 
 ---
 
@@ -38,49 +44,53 @@ This document describes how the ICAADA web application is structured, how data a
 icaada-main/
 ├── AGENTS.md / CLAUDE.md      Agent instructions (Next 16 warning)
 ├── BRAND.md / ARCHITECTURE.md Project docs
-├── next.config.ts             reactCompiler + Cloudinary image allow-list
+├── .env.example               Every env var, documented (copy to .env)
+├── next.config.ts             reactCompiler + Cloudinary image allow-list (from CLOUDINARY_CLOUD_NAME)
+├── prisma.config.ts           Prisma 7 CLI config: schema, migrations, seed, DIRECT_URL
+├── prisma/
+│   ├── schema.prisma          The single data model
+│   ├── migrations/            SQL migrations (commit these)
+│   └── seed.ts                Dev users + content.ts → PUBLISHED rows (idempotent)
 ├── postcss.config.mjs         Tailwind v4 PostCSS plugin
 ├── eslint.config.mjs          Active ESLint config (next core-web-vitals + TS)
 ├── eslint.config.mts          Second, generic flat config (unused by `next lint`)
 ├── tsconfig.json              strict, bundler resolution, @/* → src/*
-├── pnpm-workspace.yaml        Build-script ignores (sharp, unrs-resolver)
+├── pnpm-workspace.yaml        Allowed build scripts (prisma, bcrypt, esbuild)
 ├── public/                    Default Next SVGs only
 └── src/
+    ├── instrumentation.ts     Validates env once at server boot (fail fast)
     ├── app/
     │   ├── layout.tsx         Root <html>/<body>, metadata, globals.css
     │   ├── globals.css        ~5k lines: tokens + all component CSS
-    │   ├── favicon.ico
     │   ├── (public)/          Route group: public site (no URL segment)
     │   │   ├── layout.tsx     Header/nav, mobile menu, <Footer/>
     │   │   ├── page.tsx       /            Home
-    │   │   ├── about/         /about
-    │   │   ├── our-work/      /our-work
-    │   │   ├── team/          /team
-    │   │   ├── events/        /events, /events/[slug]
-    │   │   ├── media/         /media
-    │   │   ├── news/          /news, /news/[slug]
-    │   │   ├── get-involved/  /get-involved
-    │   │   └── contact/       /contact
+    │   │   └── about/ our-work/ team/ events/ media/ news/ get-involved/ contact/
+    │   ├── api/               Route Handlers (see §5.3)
+    │   │   ├── auth/          login · logout · me
+    │   │   ├── public/        published content reads + contact/volunteer/newsletter forms
+    │   │   └── admin/         guarded CRUD, inbox, newsletter, users, settings, uploads
     │   └── admin/             Admin screens (see §6, not routed yet)
-    │       ├── dashboard.tsx  login.tsx  messages.tsx  newsletter.tsx
-    │       ├── settings.tsx   module-page.tsx
-    ├── components/
-    │   ├── site.tsx           Shared public building blocks (PageHero, ButtonLink,
-    │   │                      Eyebrow, ImageCard, HeroCarousel, legacy Shell/Footer)
-    │   ├── Footer.tsx         Footer used by (public)/layout.tsx
-    │   ├── credibility.tsx    VoiceCarousel, VoiceDetailModal, FeaturedVideo, …
-    │   ├── team.tsx           TeamGrid, TeamMemberCard, TeamMemberModal
-    │   ├── error-boundary.tsx Class-based ErrorBoundary with resetKey
-    │   ├── ButtonLink.tsx, Eyebrow.tsx, HeroCarousel.tsx   (duplicates of site.tsx exports, unused)
-    │   ├── admin/             Admin shell, forms, module manager, config
-    │   └── ui/                shadcn/ui-style Radix wrappers (~55 files)
+    ├── Services/              Business rules, DTOs, activity logging (*.service.ts)
+    ├── Repositories/          The ONLY Prisma users (*.repository.ts)
+    ├── Schemas/               Zod request schemas + domain enums (*.schema.ts)
+    ├── generated/prisma/      Generated Prisma client. Git-ignored, never hand-edited
+    ├── components/            (unchanged; see §4, §6)
     ├── data/
-    │   ├── content.ts         All public-site content (typed arrays/objects)
-    │   └── admin/mock.ts      Admin types + placeholder seed records
+    │   ├── content.ts         Static site content (pages still read it; seed source)
+    │   └── admin/mock.ts      Admin UI demo types/records (superseded by the API)
     ├── hooks/                 use-mobile, use-toast (shadcn)
     ├── lib/
-    │   ├── utils.ts           cn() = clsx + tailwind-merge
-    │   └── mock-auth.ts       mockAdminLogin(): simulated auth
+    │   ├── env.ts             Zod-validated env (getEnv)
+    │   ├── prisma.ts          Prisma client singleton (Repositories only)
+    │   ├── api/               api-error · response (ok/handle) · request (parse) · content-routes
+    │   ├── auth/              session (JWT) · cookies · password (bcrypt) · auth-guard
+    │   ├── cache.ts           unstable_cache wrappers + revalidateContent()
+    │   ├── rate-limit.ts      In-memory fixed-window limiter
+    │   ├── cloudinary.ts      Upload signature helper
+    │   ├── notifier.ts        Notification interface (logs for now)
+    │   ├── slug.ts            slugify / uniqueSlug
+    │   └── utils.ts           cn() = clsx + tailwind-merge
     └── helpers.ts             Legacy Unsplash photo map
 ```
 
@@ -108,9 +118,9 @@ icaada-main/
 | `/news`, `/news/[slug]` | `news/…` | `news` (same slug lookup) |
 | `/media` | `media/page.tsx` | `mediaItems`, `leaderVideos`, `stakeholderVoices` |
 | `/get-involved` | `get-involved/page.tsx` | Static copy |
-| `/contact` | `contact/page.tsx` | Form with `preventDefault()`; it has no submit target yet |
+| `/contact` | `contact/page.tsx` | Form with `preventDefault()`. The backend endpoint `POST /api/public/contact` exists but the form is not wired to it yet |
 
-Dynamic routes read the slug on the client with `useParams()`. They do not use `generateStaticParams` and do not call `notFound()`, so an unknown slug renders the first item instead of a 404.
+Dynamic routes read the slug on the client with `useParams()`. They do not use `generateStaticParams` and do not call `notFound()`, so an unknown slug renders the first item instead of a 404. The fix comes with the service swap in §5.6.
 
 ---
 
@@ -128,44 +138,162 @@ Dynamic routes read the slug on the client with `useParams()`. They do not use `
 
 ---
 
-## 5. Data layer
+## 5. Backend & data layer
 
-### Public content: `src/data/content.ts`
-
-A single module of typed constants acts as a "CMS in code":
+### 5.1 Layering (strict)
 
 ```
-photos · heroSlides · strategicPriorities · communityActionModel
-frameworkPrinciples · innovationAgenda · partnershipGroups · coreValues
-sustainabilitySteps · impactAmbition · events · team · teamMembers (TeamMember[])
-news · mediaItems · stakeholderVoices · leaderVideos
+Route Handler   src/app/api/**/route.ts        parse + Zod-validate, call guard, delegate, shape JSON
+   ▼
+Auth guard      src/lib/auth/auth-guard.ts     requireAuth / requireEditor / requireAdmin
+   ▼
+Service         src/Services/*.service.ts      business rules, authorization beyond role, DTOs,
+   ▼                                           ActivityLog writes, cache revalidation
+Repository      src/Repositories/*.repository.ts   the ONLY code that imports @/lib/prisma
+   ▼
+Prisma client   src/generated/prisma  →  PostgreSQL
 ```
 
-- **Why:** there is no backend, editors are developers for now, and the content changes rarely. Static data is type-checked, versioned in git and needs no build-time fetching.
-- **Images and video** are Cloudinary URLs. `next.config.ts` allow-lists only `https://res.cloudinary.com/dcvyjmflf/**`, so any other remote host fails in `next/image`. `src/helpers.ts` holds older Unsplash URLs. Only the unused `components/HeroCarousel.tsx` imports it, and Unsplash is not allow-listed.
-- **Migration path:** the admin module keys (`team`, `events`, `media`, `voices`, `news`, `programs`, `partners`) match these content collections one to one. When a real backend arrives, `content.ts` can be replaced by fetches in Server Components using the same shapes.
+- **Route Handlers** contain no business logic and never touch Prisma. The seven content modules share factories in `src/lib/api/content-routes.ts`, so each `route.ts` is three lines.
+- **Services** never import Prisma. They depend on repository functions and on the domain enums in `src/Schemas/common.schema.ts`, which mirror the Prisma enums.
+- **Repositories:** one per aggregate. Known Prisma errors are mapped to API errors in `withPrismaErrors` (unique → 409, missing → 404, bad foreign key → 422).
+- **Schemas:** one Zod file per domain area in `src/Schemas/`. `create` schemas carry the defaults, and `update` schemas are `create.partial()`.
+- **Naming:** kebab-case files, and the folders are named exactly `Services`, `Repositories` and `Schemas`, to match the Academy LMS.
+- **Allowed exceptions:** `src/lib/prisma.ts` (the client itself) and `prisma/seed.ts` (an offline CLI script).
 
-### Admin data: `src/data/admin/mock.ts`
+### 5.2 Data model (`prisma/schema.prisma`)
 
-- Types: `ModuleKey`, `Status` (`draft | review | published | archived`), `ModuleRecord`, `InboxMessage`, `Subscriber`, `NewsletterDraft`, `ActivityEntry`, `WorkspaceSettings`, `ProfileSettings`.
-- `seedRecords`: obviously fake placeholder data, using the `example.org` domain.
-- The screens expect a `useDemo()` store from `@/lib/admin/demo-store`, which **does not exist in the repo yet** (§6).
+| Model | Purpose | Source in `content.ts` |
+|---|---|---|
+| `User` | Admin accounts: `role` ADMIN/EDITOR, `status` ACTIVE/DISABLED, bcrypt `passwordHash`, `preferences` JSON | — |
+| `TeamMember` | Team profiles | `teamMembers` |
+| `Event` | Events. `phase` (ENVISIONED/UPCOMING/ONGOING/PAST) is the real-world state, kept separate from editorial `status` | `events` |
+| `NewsPost` | Articles (`author` → User, SetNull) | `news` |
+| `MediaItem` | Photos, videos, documents and audio by URL (`voice` → Voice, SetNull) | `mediaItems` |
+| `Voice` | Stakeholder quotes plus their optional leader video. Publishing requires `consentConfirmed` | `stakeholderVoices` + `leaderVideos` |
+| `Program` | Strategic priorities and programmes (`stage`, `featured`) | `strategicPriorities` |
+| `Partner` | Partner directory (`type`) | `partnershipGroups` |
+| `ContactMessage` | Inbox (NEW/READ/ARCHIVED, reply draft) | — |
+| `VolunteerApplication` | Native volunteer form (NEW/CONTACTED/ARCHIVED) | — |
+| `Subscriber`, `NewsletterDraft` | Newsletter list and drafts (no sending yet) | — |
+| `ActivityLog` | Audit trail written by services on every mutation | — |
+| `WorkspaceSettings` | Single row (`id = "workspace"`) | — |
 
-### Auth: `src/lib/mock-auth.ts`
+**Conventions**
+- Every content model has `slug` (unique), `status` (DRAFT/REVIEW/PUBLISHED/ARCHIVED), `publishedAt`, `sortOrder` and timestamps.
+- IDs are `cuid()`, and every relation sets an explicit `onDelete`.
+- Indexes cover slugs, `status` (paired with the sort column) and every foreign key.
+- Media columns hold Cloudinary URLs and `*PublicId` values only, never binaries.
 
-`mockAdminLogin(email, password)` waits 1.2s, then accepts any well-formed email with a password of 8+ characters. Emails ending in `@invalid.test` are rejected so the error state can be previewed. **There is no real authentication, session or route protection.**
+Page copy that no editor manages (hero slides, values, principles, the action model) stays in `content.ts`.
+
+### 5.3 API surface
+
+All responses use one of two shapes:
+- Success: `{ data, meta? }`, where list endpoints add `meta: { page, pageSize, total, totalPages }`.
+- Error: `{ error: { code, message, details? } }`.
+
+| Area | Endpoints | Guard |
+|---|---|---|
+| Auth | `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` | login: rate-limited; me: any user |
+| Public reads | `GET /api/public/{team,events,news,media,voices,programs,partners}` · `GET /api/public/{events,news}/[slug]` (404 if missing or unpublished) | none (PUBLISHED only) |
+| Public forms | `POST /api/public/contact` · `POST /api/public/volunteers` · `POST /api/public/newsletter/subscribe` | none; Zod, honeypot field `company`, per-IP rate limit; always `202` |
+| Content (×7) | `GET/POST /api/admin/{module}` (`?search=&status=&page=&pageSize=`) · `GET/PATCH/DELETE /api/admin/{module}/[id]` · `POST /api/admin/{module}/[id]/status` `{ status }` | EDITOR+ |
+| Media | `POST /api/admin/media/sign-upload` `{ resourceType, folder }` → Cloudinary signature | EDITOR+ |
+| Inbox | `GET /api/admin/messages` · `GET/PATCH/DELETE /api/admin/messages/[id]` (status, `replyDraft`) | EDITOR+ |
+| Volunteers | `GET /api/admin/volunteers` · `GET/PATCH/DELETE /api/admin/volunteers/[id]` | EDITOR+ |
+| Newsletter | `GET /api/admin/subscribers` · `PATCH/DELETE /api/admin/subscribers/[id]` · `GET/POST /api/admin/newsletter` · `GET/PATCH/DELETE /api/admin/newsletter/[id]` | EDITOR+ |
+| Activity | `GET /api/admin/activity` (`?entityType=&actorId=`) | EDITOR+ |
+| Settings | `GET /api/admin/settings` (EDITOR+) · `PATCH /api/admin/settings` (ADMIN) | mixed |
+| Profile | `GET/PATCH /api/admin/profile` · `POST /api/admin/profile/password` | any user |
+| Users | `GET/POST /api/admin/users` · `GET/PATCH/DELETE /api/admin/users/[id]` | ADMIN |
+
+**Status codes**
+- 401 when signed out, or for a bad or expired token.
+- 403 for the wrong role or a disabled account.
+- 404 for a missing record.
+- 409 for a duplicate slug or email, or an attempt to remove the last admin.
+- 422 for Zod failures (`details` maps field paths to messages), a broken publish rule, or an illegal status transition.
+- 429 when rate-limited (with a `Retry-After` header).
+
+Unknown errors are logged server-side and return a generic 500. The real message is included only outside production.
+
+### 5.4 Content workflow & rules
+
+- **Status transitions** (in `content.service.ts`, mirroring `statusTransitions` in `module-configs.ts`): DRAFT → REVIEW or PUBLISHED; REVIEW → PUBLISHED or DRAFT; PUBLISHED → ARCHIVED or DRAFT; ARCHIVED → DRAFT. New records always start as DRAFT, and status only changes through `/status`.
+- **Slugs** are generated from the title or name, with `-2`, `-3` and so on added on collision. An explicitly supplied slug that is already taken returns 409.
+- **Publish rules** live in each module's service:
+  - Team: a photo is required.
+  - Event: a start date or a date label is required, and the end date must be after the start.
+  - News: a cover image is required.
+  - Media: images need a URL and alt text; other types need an asset URL.
+  - Voice: `consentConfirmed` must be set.
+  - Programs and partners: no extra rules.
+- `publishedAt` is set the first time a record is published and is kept if it is re-published.
+- Media URLs must be on `res.cloudinary.com/<CLOUDINARY_CLOUD_NAME>/`, the same allow-list `next/image` uses.
+- The seven modules share `createContentService()`, which handles the lifecycle: listing, slugs, transitions, activity logging and revalidation. Everything module-specific is passed in from the module's own service file.
+
+### 5.5 Auth
+
+- **Session:** an HS256 JWT signed with `jose` (`SESSION_SECRET`, 7-day expiry), stored in an HTTP-only `icaada_session` cookie with `sameSite: "lax"`, `path: "/"`, and `secure` in production.
+- **Guards** reload the user from the database on every request. Disabling, demoting or deleting a user therefore takes effect immediately, even while their JWT is still valid.
+- **Login** returns the same message for an unknown email, a wrong password or a disabled account, and compares against a dummy bcrypt hash when the email is unknown so the timing matches. It is rate-limited to 5 attempts per IP and email per 15 minutes, and 30 per IP.
+- **No public registration.** Accounts come from the seed or `POST /api/admin/users` (ADMIN).
+- **Self-protection:** admins cannot change their own role or status, cannot delete themselves, and the last active admin cannot be demoted, disabled or deleted.
+- `passwordHash` never leaves the repository layer. `UserDto` omits it.
+
+### 5.6 Using the backend from Server Components
+
+Public pages should call the **services directly**, not over HTTP. These are the same functions behind `/api/public/**`:
+
+```tsx
+// src/app/(public)/events/[slug]/page.tsx (after removing "use client")
+import { notFound } from "next/navigation";
+import { eventService } from "@/Services/event.service";
+
+export default async function EventDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const event = await eventService.getPublishedBySlug((await params).slug);
+  if (!event) notFound(); // fixes today's fallback-to-events[0] bug
+  return <EventView event={event} />; // keep interactive bits in small client components
+}
+```
+
+To migrate a page:
+1. Remove `"use client"`.
+2. Replace `import { events } from "@/data/content"` with `await eventService.listPublished()`.
+3. Pass the DTOs to client components as props.
+4. Call `notFound()` on `null`.
+
+DTO field names differ slightly from `content.ts` (for example `imageUrl` instead of `image`, `phase` instead of `status`, and `dateLabel` instead of `date`), so adjust the components that consume them.
+
+**Caching** (Next 16 without Cache Components):
+- `listPublished` and `getPublishedBySlug` are wrapped in `unstable_cache`, tagged `content:<module>`, with a one-hour backstop.
+- Every admin mutation that affects public content calls `revalidateContent()` (`src/lib/cache.ts`). That function calls `revalidateTag(tag, { expire: 0 })`, so editors see a publish immediately, and `revalidatePath` for the public pages that render the module.
+- `updateTag` is not used because it only works in Server Actions.
+- If Cache Components is enabled later, replace `unstable_cache` with `"use cache"` and `cacheTag` in `src/lib/cache.ts`. The services keep the same interface.
+
+### 5.7 Media uploads
+
+`POST /api/admin/media/sign-upload` returns `{ uploadUrl, apiKey, timestamp, folder, signature }`, signed with the server-side API secret. The browser then POSTs the file straight to Cloudinary and saves the returned `secure_url` and `public_id` on the record. No file bytes go through this app.
+
+### 5.8 Cross-cutting
+
+- **Env:** `src/lib/env.ts` validates formats with Zod, not just presence: Postgres URLs, a secret of at least 32 characters, the cloud-name pattern, a numeric API key.
+- **Rate limiting:** `src/lib/rate-limit.ts` keeps counters in memory per instance. Use Redis before scaling out.
+- **Notifications:** `src/lib/notifier.ts` defines the interface. The current implementation only logs; plug in email later.
+- **Admin mock data:** `src/data/admin/mock.ts` is now only demo data for the unported screens. The real shapes are the DTOs exported from each service.
 
 ---
 
 ## 6. Admin workspace (in migration)
 
-The working tree shows an admin port in progress, with uncommitted changes against `main`:
+The admin UI port from the Vite + wouter prototype is in progress:
 
 ```
 components/admin/
   admin-layout.tsx    Sidebar shell (Dashboard · Content · Organisation · Engagement · Settings)
   auth-layout.tsx     Split-screen login layout (photo + form)
-  login-form.tsx      Validated login → mockAdminLogin → redirect
+  login-form.tsx      Validated login → POST /api/auth/login (sets session cookie) → redirect
   password-input.tsx  Show/hide password field
   admin-parts.tsx     PageHeading, StatusBadge, Toolbar, EmptyState, Confirm/Form/DetailDialog
   fields-form.tsx     Schema-driven form (text|textarea|select|date|url|email|asset)
@@ -183,10 +311,10 @@ app/admin/
 **Current blockers** (`tsc --noEmit` reports errors only in admin files; the public site type-checks clean):
 
 1. `wouter` (`Link`, `useLocation`) is imported by `admin-layout`, `auth-layout`, `login-form` and `module-manager`, but it is not installed. Replace it with `next/link` and `useRouter`/`usePathname` from `next/navigation`.
-2. `@/lib/admin/demo-store` (`useDemo`) is missing. It needs a client-side store (e.g. a React context seeded from `seedRecords`) exposing `records`, `messages`, `subscribers`, `activity`, `profile` and mutators.
+2. `@/lib/admin/demo-store` (`useDemo`) is missing. Rather than building an in-memory store, back it with the API: each `useDemo()` call maps onto a `/api/admin/**` endpoint (§5.3). The response DTOs already match the screens' field names, with enum values upper-cased (`PUBLISHED` instead of `published`).
 3. The screens are not routed. They need `app/admin/layout.tsx` (client, wrapping `AdminLayout`), `app/admin/page.tsx` → dashboard, `app/admin/login/page.tsx`, and `app/admin/[module]/page.tsx` or one folder per module.
 4. Several `implicit any` errors cascade from the missing store types.
-5. There is no route guard. Once real auth exists, protect `/admin/**` with Next 16's request interception (check the bundled docs for the current file convention) or a server-side session check in the admin layout.
+5. The **pages** have no route guard yet. (The API is fully guarded.) When the screens are routed, check the session in a server `app/admin/layout.tsx` with `getCurrentActor()` and redirect to `/admin/login`. A `proxy.ts` (Next 16's renamed middleware) can also do a cheap cookie-presence redirect, but it must not replace the server-side check.
 
 Because `tsconfig.json` includes `**/*.tsx`, **`next build` will fail type-checking until these are resolved or the files are excluded.**
 
@@ -219,15 +347,21 @@ Because `tsconfig.json` includes `**/*.tsx`, **`next build` will fail type-check
 ## 9. Build, run & deploy
 
 ```bash
-pnpm install
-pnpm dev      # next dev
-pnpm build    # next build (type-checks + lints)
-pnpm start    # serve production build
-pnpm lint     # eslint
+pnpm install              # also runs `prisma generate` (postinstall)
+cp .env.example .env      # fill in DATABASE_URL, DIRECT_URL, SESSION_SECRET, Cloudinary keys
+pnpm prisma migrate dev   # create/apply migrations (alias: pnpm db:migrate)
+pnpm prisma db seed       # dev users + content.ts data (alias: pnpm db:seed)
+pnpm dev                  # next dev
+pnpm build                # next build (type-checks + lints)
+pnpm start                # serve production build
+pnpm db:deploy            # production: prisma migrate deploy
+pnpm db:studio            # browse data
 ```
 
-- No `.env` is required (`.env*` is git-ignored for later use).
-- The project is set up for Vercel or any Node host. There is no Dockerfile or CI config in the repo.
+- **Env:** every variable in `.env.example` is required at runtime. `src/instrumentation.ts` validates them when the server boots, and the server refuses to start with a list of what is wrong. `next build` does **not** need them: env and the DB client are created lazily, at first use.
+- **Seed accounts:** `admin@example.org` / `dev-admin-password-123` (ADMIN) and `editor@example.org` / `dev-editor-password-123` (EDITOR), unless the `SEED_*` vars are set. The seed refuses the fake defaults when `NODE_ENV=production`.
+- **Prisma 7 notes:** connection URLs live in `prisma.config.ts` (CLI, `DIRECT_URL`) and `src/lib/prisma.ts` (runtime, `DATABASE_URL` via `@prisma/adapter-pg`), not in `schema.prisma`. `migrate dev` no longer seeds automatically, so run `db seed` yourself.
+- **Hosting:** any Node host with PostgreSQL works (Vercel + Neon/Supabase, Railway, etc.). Use a pooled `DATABASE_URL` and a direct `DIRECT_URL` where the provider offers both. There is no Dockerfile or CI config in the repo.
 
 ---
 
@@ -235,7 +369,8 @@ pnpm lint     # eslint
 
 | Priority | Item |
 |---|---|
-| **High** | Finish the admin port: remove `wouter`, add `demo-store`, wire the routes. `next build` is blocked until then |
+| **High** | Finish the admin port: remove `wouter`, replace `demo-store` with calls to `/api/admin/**`, route the screens behind a session check. `next build` is blocked until then (all remaining type errors are in the admin-port files) |
+| **High** | Swap public pages from `content.ts` to the services and add `notFound()` (§5.6). Then wire the contact, volunteer and newsletter forms to `/api/public/**` |
 | **High** | Fix the footer copy (it says "International Centre for Advocacy"). See BRAND.md |
 | Medium | Convert pages to Server Components, add per-page metadata, `generateStaticParams` and `notFound()` for slugs |
 | Medium | Load DM Sans and Space Grotesk via `next/font` and drop the unused Geist fonts and the CSS `@import` |
@@ -243,4 +378,27 @@ pnpm lint     # eslint
 | Low | Delete the duplicate `ButtonLink.tsx`, `Eyebrow.tsx`, `HeroCarousel.tsx` and the legacy `Shell`/`Footer` in `site.tsx`; delete `eslint.config.mts` and `helpers.ts` |
 | Low | Remove or rebrand the unused `.dark` theme; split `globals.css` |
 | Low | Replace the boilerplate `README.md`; add tests (selectors already exist) and CI |
-| Future | Real backend/CMS and auth to replace `content.ts`, `mock.ts` and `mock-auth.ts`; give the contact and newsletter forms a submit target |
+| Medium | Move rate limiting to a shared store (Redis/Upstash) before running more than one server instance |
+| Medium | Add a signed unsubscribe link/endpoint before sending any newsletter; choose an email provider and implement `Notifier` |
+| Low | Add API integration tests (the request/response contracts are stable) |
+
+---
+
+## 11. How to add a new content module
+
+The example adds a `resources` module (downloadable guides). Follow the same steps for any editorial collection.
+
+1. **Model:** add `model Resource` to `prisma/schema.prisma` with the standard content fields (`id cuid`, `slug @unique`, `status ContentStatus`, `publishedAt`, `sortOrder`, timestamps, and `@@index([status, sortOrder])`) plus its own columns. Run `pnpm prisma migrate dev --name add-resources`.
+2. **Schema:** create `src/Schemas/resource.schema.ts`. Define `resourceCreateSchema = z.object({ ...contentBaseShape, title: text(200, "Title"), … })`, set `resourceUpdateSchema = resourceCreateSchema.partial()`, and export the inferred input types. Use `cloudinaryUrl` and `optionalPublicId` for media fields.
+3. **Repository:** create `src/Repositories/resource.repository.ts` and implement `ContentRepository<Resource, …>` (from `repository-utils.ts`) against `getPrisma().resource`. Copy an existing content repository and change the delegate, the search fields and the public `orderBy`.
+4. **Service:** create `src/Services/resource.service.ts`. Export a `ResourceDto`, a `toResourceDto` (dates as ISO strings), and `resourceService = createContentService({ module: "resources", entityType: "resource", label: "Resource", repository, toDto, titleOf, slugSource, publishProblems? })`. Add `"resources"` to `ContentModule` and to `publicPaths` in `src/lib/cache.ts`.
+5. **Routes:** add three-line route files using the factories in `src/lib/api/content-routes.ts`:
+   - `src/app/api/admin/resources/route.ts`: `adminCollectionRoutes(resourceService, resourceCreateSchema)`
+   - `src/app/api/admin/resources/[id]/route.ts`: `adminItemRoutes(resourceService, resourceUpdateSchema)`
+   - `src/app/api/admin/resources/[id]/status/route.ts`: `adminStatusRoute(resourceService)`
+   - `src/app/api/public/resources/route.ts`: `publicListRoute(resourceService)` (add `[slug]/route.ts` with `publicSlugRoute` if it has detail pages)
+6. **Admin UI:** add `"resources"` to `ModuleKey` and a `ModuleConfig` entry in `src/components/admin/module-configs.ts` (label, columns, fields, `titleKey`). Then add a sidebar item in `admin-layout.tsx`. `ModuleManager` renders it with no new screen code.
+7. **Seed (optional):** if the module starts with existing content, add an idempotent `upsertBySlug` block to `prisma/seed.ts`.
+8. **Verify:** `pnpm exec tsc --noEmit` and `pnpm lint`, then confirm that `grep -rn "@/lib/prisma" src | grep -v src/Repositories` prints nothing apart from the client file itself.
+
+For a non-editorial aggregate (no publish workflow, e.g. a form inbox), skip `createContentService`. Write an explicit repository, schema and service the way `volunteer.*` does, and use plain route files.
