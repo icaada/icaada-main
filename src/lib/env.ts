@@ -32,22 +32,25 @@ const envSchema = z.object({
     .min(20, "looks too short to be a Cloudinary API secret"),
   /** Public base URL used in emailed links. Falls back to Vercel's production URL, then localhost. */
   APP_URL: z.string().url("must be a full URL, e.g. https://www.icaada.com.ng").optional(),
-  /** Postmark server API token. Optional: without it, emails are logged instead of sent. */
-  /** "POSTMARK_API_TEST" is Postmark's test token: requests are validated but nothing is delivered. */
-  POSTMARK_SERVER_TOKEN: z
-    .string()
-    .regex(/^(?:[0-9a-f-]{36}|POSTMARK_API_TEST)$/i, "must be a Postmark server token (UUID)")
-    .optional(),
-  /** Verified Postmark sender, e.g. "ICAADA <no-reply@icaada.com.ng>". Required with POSTMARK_SERVER_TOKEN. */
+  /** SMTP server for outgoing mail (any provider). Optional: without it, emails are logged instead of sent. */
+  SMTP_HOST: z.string().min(1).optional(),
+  /** 465 = implicit TLS; 587 (default) or 25 = STARTTLS. */
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  /** Force implicit TLS ("true"/"false"). Defaults to true only on port 465. */
+  SMTP_SECURE: z.enum(["true", "false"]).optional(),
+  SMTP_USER: z.string().min(1).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  /** Sender, e.g. "ICAADA <no-reply@icaada.com.ng>". Required with SMTP_HOST; the provider must allow this address. */
   EMAIL_FROM: z
     .string()
     .regex(/^(?:[^<>]+<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/, 'must be an address or "Name <address>"')
     .optional(),
-  /** Postmark message stream for transactional mail (default "outbound"). */
-  POSTMARK_MESSAGE_STREAM: z.string().min(1).default("outbound"),
 }).superRefine((env, ctx) => {
-  if (env.POSTMARK_SERVER_TOKEN && !env.EMAIL_FROM) {
-    ctx.addIssue({ code: "custom", path: ["EMAIL_FROM"], message: "is required when POSTMARK_SERVER_TOKEN is set" });
+  if (env.SMTP_HOST && !env.EMAIL_FROM) {
+    ctx.addIssue({ code: "custom", path: ["EMAIL_FROM"], message: "is required when SMTP_HOST is set" });
+  }
+  if (Boolean(env.SMTP_USER) !== Boolean(env.SMTP_PASS)) {
+    ctx.addIssue({ code: "custom", path: [env.SMTP_USER ? "SMTP_PASS" : "SMTP_USER"], message: "SMTP_USER and SMTP_PASS must be set together" });
   }
 });
 

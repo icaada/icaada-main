@@ -7,7 +7,7 @@ Website and admin workspace for the **Initiative for Community Action Against Dr
 
 ## Stack
 
-Next.js 16 (App Router, React 19, React Compiler) · TypeScript · Tailwind CSS v4 · Prisma 7 + PostgreSQL · JWT sessions backed by a `Session` table · Zod · Cloudinary (media) · Postmark (email) · pnpm.
+Next.js 16 (App Router, React 19, React Compiler) · TypeScript · Tailwind CSS v4 · Prisma 7 + PostgreSQL · JWT sessions backed by a `Session` table · Zod · Cloudinary (media) · Nodemailer over SMTP (email) · pnpm.
 
 ## Getting started
 
@@ -19,7 +19,7 @@ pnpm prisma db seed          # admin + editor accounts and the initial site cont
 pnpm dev                     # http://localhost:3000 (admin at /admin)
 ```
 
-The seed creates `admin@example.org` and `editor@example.org` with development passwords unless you set the `SEED_*` variables (see `.env.example`). Without `POSTMARK_SERVER_TOKEN`, emails such as invites and password resets are printed to the terminal instead of sent.
+The seed creates `admin@example.org` and `editor@example.org` with development passwords unless you set the `SEED_*` variables (see `.env.example`). Without `SMTP_HOST`, emails such as invites and password resets are printed to the terminal instead of sent. Any SMTP provider works (see `.env.example`).
 
 To run a disposable local database without installing Postgres, use `pnpm prisma dev` and set `DATABASE_POOL_MAX=1`.
 

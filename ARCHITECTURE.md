@@ -86,7 +86,7 @@ icaada-main/
     │   ├── cache.ts           unstable_cache wrappers + revalidateContent()
     │   ├── rate-limit.ts      In-memory fixed-window limiter
     │   ├── cloudinary.ts      Upload signature helper
-    │   ├── email/             mailer.ts (Postmark HTTP API) · templates.ts (branded, escaped HTML + text)
+    │   ├── email/             mailer.ts (Nodemailer SMTP) · templates.ts (branded, escaped HTML + text)
     │   ├── slug.ts            slugify / uniqueSlug
     │   └── utils.ts           cn() = clsx + tailwind-merge
 ```
@@ -287,9 +287,9 @@ DTO fields differ from the old `content.ts` shapes. Watch for `imageUrl` (was `i
 - **Env:** `src/lib/env.ts` validates formats with Zod, not just presence: Postgres URLs, a secret of at least 32 characters, the cloud-name pattern, a numeric API key.
 - **Rate limiting:** `src/lib/rate-limit.ts` keeps counters in memory per instance. Use Redis before scaling out.
 - **Email** (`src/Services/notification.service.ts` → `src/lib/email/`):
-  - Sent through Postmark's HTTP API, configured by `POSTMARK_SERVER_TOKEN`, `EMAIL_FROM` and `POSTMARK_MESSAGE_STREAM`.
+  - Sent with **Nodemailer over SMTP**, so any provider works (Postmark, Brevo, SES, Google Workspace…). Configured by `SMTP_HOST`, `SMTP_PORT` (587 STARTTLS by default, 465 implicit TLS), `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` and `EMAIL_FROM`. When credentials are set, TLS is mandatory. Each message carries its category in `X-Tag` (and `X-PM-Tag`, which Postmark reads).
   - Delivery runs in `after()`, so it never slows down or fails the request; failures are logged.
-  - Without a token, emails are printed to the log in development and skipped in production.
+  - Without `SMTP_HOST`, emails are printed to the log in development and skipped in production.
   - Links use `APP_URL`, falling back to the Vercel production URL.
   - **Staff alerts:** new contact messages and volunteer applications go to the workspace **contact email** (Settings), with reply-to set to the sender.
   - **Account emails:** invites and password resets.
@@ -390,7 +390,7 @@ pnpm db:studio            # browse data
 
 | Priority | Item |
 |---|---|
-| Medium | Newsletter sending: a Postmark *broadcast* stream, batch sends, and a per-issue unsubscribe link (the signed link and headers already exist) |
+| Medium | Newsletter sending: batch sends through a bulk/broadcast-capable SMTP stream, with a per-issue unsubscribe link (the signed link and headers already exist) |
 | Medium | Add API integration tests (the contract checks used during development can become permanent) and a CI workflow: lint, type-check, build |
 | Medium | Move rate limiting to a shared store (Redis/Upstash) before running more than one server instance |
 | Low | Double opt-in for newsletter sign-ups (send a confirm link before subscribing) |
