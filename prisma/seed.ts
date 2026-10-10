@@ -247,7 +247,7 @@ async function seedContent() {
           dateLabel: item.date,
           imageUrl: item.image,
           imagePublicId: publicIdFromUrl(item.image),
-          voiceId: "voiceId" in item && item.voiceId ? (voiceIds.get(item.voiceId) ?? null) : null,
+          voiceId: voiceIds.get((item as { voiceId?: string }).voiceId ?? "") ?? null,
         },
       }),
     );

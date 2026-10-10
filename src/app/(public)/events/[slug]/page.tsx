@@ -59,7 +59,7 @@ export default async function EventDetail({ params }: Props) {
                   ? "About this event."
                   : isSummit
                     ? "A launchpad for sustained community action."
-                    : "An illustrative event experience."}
+                    : "About this event."}
               </h2>
               {paragraphs.length ? (
                 paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
@@ -88,9 +88,8 @@ export default async function EventDetail({ params }: Props) {
                 </>
               ) : (
                 <p>
-                  This static example demonstrates how ICAADA’s event interface
-                  can support event information without claiming that the
-                  activity has taken place.
+                  Full details for this event will be shared here. Register your
+                  interest and the ICAADA team will keep you informed.
                 </p>
               )}
               <ButtonLink href="/contact" testId="link-event-detail-interest">
@@ -130,8 +129,8 @@ export default async function EventDetail({ params }: Props) {
               <h2 className="display">A multi-stakeholder room.</h2>
             </div>
             <p>
-              Representative participant groups are shown for UI demonstration;
-              no individual speakers are claimed or announced.
+              ICAADA convenings bring together the groups whose cooperation
+              makes community prevention work.
             </p>
           </div>
           <div className="ecosystem">
@@ -153,57 +152,6 @@ export default async function EventDetail({ params }: Props) {
         </div>
       </section>
       {voices.length > 0 && <VoiceCarousel voices={voices} />}
-      <section className="section-pad">
-        <div className="container-wide">
-          <div className="section-heading">
-            <div>
-              <Eyebrow>Event gallery</Eyebrow>
-              <h2 className="display">A space for the visual record.</h2>
-            </div>
-            <p>
-              These photographs are layout placeholders, not a gallery from this
-              event.
-            </p>
-          </div>
-          <div className="event-gallery">
-            <Image
-              src={photos.community}
-              alt="Illustrative community gathering"
-              width={540}
-              height={400}
-            />
-            <Image width={330} height={300} src={photos.youth} alt="Illustrative youth gathering" />
-            <Image width={330} height={300} src={photos.workshop} alt="Illustrative workshop setting" />
-          </div>
-        </div>
-      </section>
-      <section className="section-pad work-band">
-        <div className="container-wide">
-          <div className="section-heading">
-            <div>
-              <Eyebrow>Related media</Eyebrow>
-              <h2 className="display">Continue the learning.</h2>
-            </div>
-            <p>
-              Static placeholders show where publications, press, video and
-              event resources can appear.
-            </p>
-          </div>
-          <div className="related-media-grid">
-            {[
-              "Community Action Model briefing",
-              "Youth resilience video concept",
-              "Proposed 2027–2032 Framework overview",
-            ].map((item, index) => (
-              <article key={item}>
-                <span className="work-index">0{index + 1}</span>
-                <h3>{item}</h3>
-                <p>Media placeholder · content to be published by ICAADA.</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
     </>
   );
 }

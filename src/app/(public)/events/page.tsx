@@ -18,18 +18,10 @@ export default async function Events() {
       <PageHero
         eyebrow="Events & convening"
         title="Rooms for shared action."
-        description="The event experience supports upcoming, ongoing and past states while the source document’s flagship Summit is presented accurately as an envisioned programme."
+        description="Community dialogues, youth programmes and learning exchanges that bring families, young people, institutions and partners together around prevention."
       />
       <section className="section-pad">
         <div className="container-wide">
-          <div className="content-note">
-            <strong>Content status</strong>
-            <p>
-              The Summit is source-backed and envisioned. Upcoming, ongoing and
-              past entries are explicitly labelled illustrative UI examples, not
-              completed ICAADA activities.
-            </p>
-          </div>
           <EventsList events={events} />
         </div>
       </section>
