@@ -288,39 +288,6 @@ export const events = [
     description:
       "An envisioned platform for bringing together key stakeholders to develop a shared regional response to drug abuse.",
   },
-  {
-    slug: "upcoming-community-dialogue-example",
-    status: "Upcoming",
-    contentStatus: "Illustrative UI example",
-    dateLabel: "Date to be announced",
-    type: "Dialogue",
-    title: "Community dialogue on prevention and early support — UI example",
-    location: "Illustrative community venue",
-    description:
-      "An illustrative event format for families, young people, trusted institutions and local partners to shape practical action together.",
-  },
-  {
-    slug: "ongoing-youth-resilience-example",
-    status: "Ongoing",
-    contentStatus: "Illustrative UI example",
-    dateLabel: "Illustrative ongoing activity",
-    type: "Youth programme",
-    title: "Youth resilience and peer engagement — UI example",
-    location: "Illustrative programme setting",
-    description:
-      "An illustrative ongoing-event state showing how youth leadership, positive alternatives and peer engagement could be presented.",
-  },
-  {
-    slug: "past-learning-exchange-example",
-    status: "Past",
-    contentStatus: "Illustrative UI example",
-    dateLabel: "Illustrative past event",
-    type: "Learning exchange",
-    title: "Evidence, innovation and community learning exchange — UI example",
-    location: "Illustrative partner venue",
-    description:
-      "An illustrative learning format for sharing evidence, lessons and locally relevant approaches to prevention.",
-  },
 ];
 
 export const team = [
@@ -420,15 +387,6 @@ export const mediaItems = [
     video: true,
   },
   {
-    category: "Voices of Support",
-    title: "Stakeholder perspective 01",
-    date: "Placeholder profile",
-    image: photos.portrait,
-    description:
-      "Placeholder stakeholder photograph and statement. Replace with verified content before publication.",
-    voiceId: "voice-01",
-  },
-  {
     category: "Publications",
     title: "Community Action Model briefing",
     date: "Publication concept",
@@ -459,14 +417,6 @@ export const mediaItems = [
     image: photos.hands,
     description:
       "An overview of the proposed principles for coordinated community-level action.",
-  },
-  {
-    category: "Events",
-    title: "Summit stakeholder voices",
-    date: "Event connection concept",
-    image: photos.meeting,
-    description:
-      "A placeholder relationship between the envisioned Summit and voices participating in the conversation.",
   },
 ];
 
